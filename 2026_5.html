@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>福岡散策 2026 | 5日隨身手冊</title>
+  <style>
+    :root {
+      --bg: #F8F7F4;
+      --card-bg: #FFFFFF;
+      --text: #242628;
+      --sub-text: #6B7280;
+      --accent: #E07A5F;
+      --accent-soft: #FBF0EC;
+      --navy: #1D2D44;
+      --navy-soft: #E8EEF5;
+      --meal-color: #D98A2B;
+      --meal-soft: #FCF4EB;
+      --border: #E8E6E1;
+      --done-bg: #F1EFEA;
+      --done-text: #9CA3AF;
+      --radius-md: 14px;
+      --shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding-bottom: 95px;
+    }
+    .hero-section {
+      background: linear-gradient(145deg, var(--navy) 0%, #2E4057 100%);
+      color: #FFF;
+      padding: 24px 20px 20px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 8px 24px rgba(29, 45, 68, 0.15);
+    }
+    .hero-badge {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: #9DBFD8;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .hero-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .hero-meta {
+      font-size: 12px;
+      color: #D5E1ED;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .hero-meta-item {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .progress-bar-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 12px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 99px;
+      margin: 0 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 16px 20px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex: 0 0 auto;
+      padding: 9px 15px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--sub-text);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #FFF;
+      border-color: var(--accent);
+      box-shadow: 0 4px 14px rgba(224, 122, 95, 0.35);
+    }
+    .tab-btn .tab-sub {
+      font-size: 10px;
+      opacity: 0.85;
+      font-weight: normal;
+    }
+    .controls-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 20px 12px;
+    }
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      color: var(--sub-text);
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .filter-btn.active {
+      background: var(--meal-color);
+      color: #FFF;
+      border-color: var(--meal-color);
+    }
+    .reset-btn {
+      font-size: 12px;
+      color: var(--sub-text);
+      background: none;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .content-container { padding: 0 20px; }
+    .day-overview-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+    .day-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .day-desc {
+      font-size: 12px;
+      color: var(--sub-text);
+      line-height: 1.5;
+    }
+    .timeline-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .timeline-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+    .timeline-card.is-meal { border-left: 4px solid var(--meal-color); }
+    .timeline-card.done {
+      background: var(--done-bg);
+      border-color: #E2E0D8;
+    }
+    .timeline-card.done .item-title,
+    .timeline-card.done .item-time-tag {
+      color: var(--done-text);
+      text-decoration: line-through;
+    }
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .item-time-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--navy);
+      background: var(--navy-soft);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-bottom: 5px;
+    }
+    .timeline-card.is-meal .item-time-tag {
+      color: var(--meal-color);
+      background: var(--meal-soft);
+    }
+    .item-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .check-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #C5C3BC;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #FFF;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .timeline-card.done .check-btn {
+      background: #7FA382;
+      border-color: #7FA382;
+    }
+    .check-btn::after {
+      content: "✓";
+      color: #FFF;
+      font-size: 12px;
+      font-weight: 800;
+      display: none;
+    }
+    .timeline-card.done .check-btn::after { display: block; }
+    .item-body {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      font-size: 13px;
+      color: var(--sub-text);
+      line-height: 1.5;
+    }
+    .card-actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .badge-pill {
+      font-size: 11px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .map-link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #2F699E;
+      background: #EAF2F9;
+      padding: 5px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.15s ease;
+    }
+    .map-link-btn:hover {
+      background: #dbe8f5;
+    }
+    .bottom-widget-bar {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: var(--navy);
+      color: #FFF;
+      border-radius: 99px;
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(29, 45, 68, 0.35);
+      z-index: 99;
+      font-size: 12px;
+    }
+    .bottom-widget-bar input {
+      width: 75px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      color: #FFF;
+      padding: 4px 8px;
+      font-size: 13px;
+      text-align: right;
+      outline: none;
+    }
+    .bottom-widget-bar input:focus {
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+    .calc-val {
+      font-weight: 800;
+      color: #F8D179;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero-section">
+    <div class="hero-badge">FUKUOKA 2026 5D4N GUIDE</div>
+    <h1 class="hero-title">福岡秋日漫遊隨身手冊</h1>
+    <div class="hero-meta">
+      <span class="hero-meta-item">📅 10/16(五) - 10/20(二)</span>
+      <span class="hero-meta-item">✈️ 虎航 IT720/IT241</span>
+      <span class="hero-meta-item">🏨 博多車站周邊</span>
+    </div>
+
+    <div class="progress-bar-wrap">
+      <span>行程完成進度</span>
+      <div class="progress-track">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <span id="progressText">0 / 0</span>
+    </div>
+  </header>
+
+  <nav class="nav-tabs" id="tabNav">
+    <button class="tab-btn active" onclick="switchDay(1)">
+      <span>Day 1</span>
+      <span class="tab-sub">10/16 五</span>
+    </button>
+    <button class="tab-btn" onclick="switchDay(2)">
+      <span>Day 2</span>
+      <span class="tab-sub">10/17 六</span>
+    </button>
+    <button class="tab-btn" onclick="switchDay(3)">
+      <span>Day 3</span>
+      <span class="tab-sub">10/18 日</span>
+    </button>
+    <button class="tab-btn" onclick="switchDay(4)">
+      <span>Day 4</span>
+      <span class="tab-sub">10/19 一</span>
+    </button>
+    <button class="tab-btn" onclick="switchDay(5)">
+      <span>Day 5</span>
+      <span class="tab-sub">10/20 二</span>
+    </button>
+  </nav>
+
+  <div class="controls-bar">
+    <button class="filter-btn" id="mealFilterBtn" onclick="toggleMealMode()">
+      <span>🍴 僅看用餐時段</span>
+    </button>
+    <button class="reset-btn" onclick="resetCurrentDay()">重設今日勾選</button>
+  </div>
+
+  <main class="content-container">
+    <div class="day-overview-card">
+      <div class="day-title" id="dayTitleHeader">載入中...</div>
+      <div class="day-desc" id="dayDescHeader">載入中...</div>
+    </div>
+
+    <section class="timeline-list" id="timelineContainer"></section>
+  </main>
+
+  <div class="bottom-widget-bar">
+    <span>¥ 日幣換算</span>
+    <input type="number" id="jpyInput" placeholder="金額" oninput="convertCurrency(this.value)" />
+    <span class="calc-val" id="twdDisplay">≈ NT$ 0</span>
+  </div>
+
+  <script>
+    const scheduleData = {
+      1: {
+        title: "Day 1：抵達福岡・博多古意與夜市散策",
+        desc: "出境後搭免費接駁車轉地鐵 5 分鐘抵達博多；晚上散步巡禮櫛田神社與那珂川水岸中洲屋台微醺氣候。",
+        items: [
+          { time: "14:30 – 17:55", title: "台北出發 ➔ 抵達福岡機場（IT720）", desc: "飛抵福岡國際線航廈。前往證照查驗、提領行李出關（預估約 40～45 分鐘）。", tag: "飛行", mapQuery: "Fukuoka Airport International Terminal" },
+          { time: "18:45 – 19:10", title: "搭免費接駁車至國內線 ➔ 轉地下鐵直達博多站", desc: "出航廈於 1 號站牌搭綠色接駁公車至國內線，刷卡搭地鐵空港線 2 站（5分鐘）直達博多站。", tag: "交通關鍵", mapQuery: "Hakata Station" },
+          { time: "19:10 – 19:50", title: "飯店 Check-in 放置行李與隨身整備", desc: "前往博多車站周邊飯店辦理入住，換上輕便平底鞋準備夜遊。", tag: "飯店", mapQuery: "Hakata Station" },
+          { time: "19:50 – 20:45", title: "晚餐時間（博多車站周邊）", desc: "預留晚餐時段！博多車站筑紫口或博多口地下街有許多道地拉麵、串燒或牛舌定食。", isMeal: true, tag: "用餐時段", mapQuery: "博多一番街" },
+          { time: "20:45 – 21:15", title: "夜訪博多總鎮守「櫛田神社」", desc: "從博多口步行約 10 分鐘。欣賞夜間打燈的巨型十米「飾山笠」神轎，幽靜莊嚴。", tag: "古蹟打卡", mapQuery: "Kushida Shrine Fukuoka" },
+          { time: "21:15 – 22:30", title: "穿越川端通商店街 ➔ 中洲屋台街散策（消夜時段）", desc: "穿過商店街來到那珂川畔屋台區，感受紅燈籠、熱氣蒸騰與河面倒影。", isMeal: true, tag: "消夜微醺", mapQuery: "Nakasu Yatai Street Fukuoka" },
+          { time: "22:30 之後", title: "散步或搭地鐵返回飯店休息", desc: "中洲川端站搭地鐵空港線 1 站（2分鐘）回博多站，買水泡澡早點就寢。", tag: "收工", mapQuery: "Hakata Station" }
+        ]
+      },
+      2: {
+        title: "Day 2：西向東單向推進・海景文青與古石垣",
+        desc: "絕不走回頭路！一早地鐵直奔最西端西新站登福岡塔避開人潮，順向收回大濠水岸、文青藥院與大名街區。",
+        items: [
+          { time: "09:00 – 11:30", title: "地鐵至西新站 ➔ 百道濱沙灘 ＆ 登頂福岡塔", desc: "09:30 福岡塔開門即登頂，採光通透無人擠人，遠眺博多灣海景。", tag: "最西端", mapQuery: "Fukuoka Tower" },
+          { time: "11:30 – 11:45", title: "西新站搭地鐵空港線 2 站至「大濠公園站」", desc: "向東收回第一站，車程僅 4 分鐘，出站即達開闊水岸。", tag: "地鐵順行", mapQuery: "Ohori Park Station" },
+          { time: "11:45 – 13:00", title: "午餐時間（大濠公園水岸周邊）", desc: "預留午餐時段！可於湖畔咖啡館或周邊定食餐廳悠閒享用午餐。", isMeal: true, tag: "用餐時段", mapQuery: "Ohori Park Fukuoka" },
+          { time: "13:00 – 14:15", title: "大濠公園水岸散步 ＆ 舞鶴公園福岡城跡石垣眺望", desc: "穿過湖心柳樹石橋，登上福岡城天守台巨石石垣 360 度俯瞰市景。", tag: "名所漫步", mapQuery: "Maizuru Park Fukuoka Castle Ruins" },
+          { time: "14:15 – 17:00", title: "地鐵至「藥院」街區生活選物 ＆ 質感下午茶", desc: "逛生活器皿名店 B・B・B POTTERS，品嚐極簡手沖咖啡或精緻法式甜點。", tag: "質感選品", mapQuery: "B.B.B POTTERS Fukuoka" },
+          { time: "17:00 – 18:30", title: "天神大名潮流巷弄 ＆ 警固神社免費足湯舒緩", desc: "漫步穿過大名潮流街區；走進警固神社泡 15 分鐘天然溫泉足湯！", tag: "療癒足湯", mapQuery: "Kego Shrine Footbath" },
+          { time: "18:30 – 20:00", title: "晚餐時間（天神商圈周邊）", desc: "預留晚餐時段！天神周邊有許多熱門博多牛腸鍋、水炊雞肉鍋或巷弄炭火燒鳥。", isMeal: true, tag: "用餐時段", mapQuery: "Tenjin Fukuoka" },
+          { time: "20:00 之後", title: "天神站搭地鐵空港線 3 站直達博多站飯店", desc: "車程僅 5 分鐘直達博多站，回飯店早點休息。", tag: "收工", mapQuery: "Hakata Station" }
+        ]
+      },
+      3: {
+        title: "Day 3：南向北順行・水鄉柳川遊船與太宰府祈福",
+        desc: "極速南向北直線推進！清晨先去最南柳川避開觀光團，午後參拜太宰府，傍晚藥院轉乘七隈線漫步天神水岸。",
+        items: [
+          { time: "08:15 – 09:37", title: "博多出發 ➔ 西鐵天神搭特急直達「西鐵柳川站」", desc: "搭地鐵到天神轉西鐵特急直達柳川（車程 49 分鐘，免換車）。", tag: "直奔最南", mapQuery: "Nishitetsu-Yanagawa Station" },
+          { time: "09:45 – 11:00", title: "柳川水鄉清晨遊船體驗（川下り）", desc: "搭乘 10:00 早班船（航程約 60～70 分鐘）。此時無團客喧擾，兩岸綠柳石橋倒影極美。", tag: "必遊水鄉", mapQuery: "Yanagawa River Punting" },
+          { time: "11:15 – 12:45", title: "午餐時間（柳川沖端老街）", desc: "下船處即為沖端老街！第一輪開門入座品嚐名物蒸籠鰻魚飯或在地料理。", isMeal: true, tag: "在地名物", mapQuery: "沖端 柳川" },
+          { time: "13:00 – 14:15", title: "西鐵特急北上 ➔ 西鐵二日市轉乘至「太宰府站」", desc: "接駁車回柳川站北上，於二日市站同月台轉太宰府列車，5 分鐘直達太宰府。", tag: "順路北返", mapQuery: "Dazaifu Station" },
+          { time: "14:15 – 16:30", title: "太宰府天滿宮參拜 ＆ 表參道吃現烤熱梅枝餅", desc: "午後團客退潮！參拜藤本壯介設計的綠色「漂浮假殿」、打卡隈研吾星巴克。", tag: "文化巡禮", mapQuery: "Dazaifu Tenmangu" },
+          { time: "16:30 – 17:30", title: "太宰府搭車 ➔ 於「西鐵藥院站」轉七隈線至天神南站", desc: "在地人神技！藥院下車下樓轉七隈線 1 站（2分鐘）抵達天神南，避開天神大站人擠人！", tag: "神級轉乘", mapQuery: "Yakuin Station" },
+          { time: "17:30 – 18:30", title: "天神中央公園 ＆ 舊公會堂貴賓館夜燈 ＆ 水岸漫步", desc: "賞明治法式木造貴賓館夜間點燈與 ACROS 綠山，在河畔步道吹夜風。", tag: "水岸夜景", mapQuery: "Tenjin Central Park" },
+          { time: "18:30 – 20:00", title: "晚餐時間（天神南／春吉水岸周邊）", desc: "預留晚餐時段！可在水岸景觀餐館慢調用餐，或走入春吉住宅巷弄吃串燒。", isMeal: true, tag: "用餐時段", mapQuery: "HARENO-GARDEN EAST & WEST" },
+          { time: "20:00 之後", title: "天神南站搭七隈線直達博多站（2 站直達，免轉乘）", desc: "走進七隈線天神南站，3 分鐘直達博多站回飯店，步調俐落舒暢。", tag: "收工", mapQuery: "Hakata Station" }
+        ]
+      },
+      4: {
+        title: "Day 4：鋼彈朝聖與平日集中購物血拼",
+        desc: "週一人潮最少逛街日！上午搭 JR 朝聖實體大 ν 鋼彈，下午一路向東收割天神商圈、運河城水舞與博多伴手禮。",
+        items: [
+          { time: "09:30 – 12:30", title: "博多搭 JR 1 站到竹下站 ➔ LaLaPort 朝聖實體大 ν 鋼彈", desc: "JR 鹿兒島本線 4 分鐘抵達竹下站步行即達。觀賞巨型鋼彈整點聲光展演與商場。", tag: "地標必看", mapQuery: "LaLaport FUKUOKA" },
+          { time: "12:30 – 12:45", title: "竹下站搭 JR 回博多，轉地鐵空港線至「天神站」", desc: "快速串聯進入天神核心商圈，展開午後採買。", tag: "移動", mapQuery: "Tenjin Station" },
+          { time: "12:45 – 14:00", title: "午餐時間（天神商圈周邊）", desc: "預留午餐時段！天神地下街周邊、百貨商場美食街均有豐富選擇。", isMeal: true, tag: "用餐時段", mapQuery: "Tenjin Underground Shopping Mall" },
+          { time: "14:00 – 17:00", title: "天神商圈集中採買（天神地下街 / Mina天神 / 大名選物）", desc: "逛九州旗艦 UNIQLO/GU、天神地下街服飾香氛，平日退稅效率極高。", tag: "血拼主力", mapQuery: "mina tenjin" },
+          { time: "17:00 – 18:30", title: "天神南搭七隈線 1 站至櫛田神社前站 ➔ 博多運河城賞水舞", desc: "順路向東！看半露天商場整點音樂水舞秀，逛 Alpen 巨型戶外運動店與動漫周邊。", tag: "向東順行", mapQuery: "Canal City Hakata" },
+          { time: "18:30 – 19:30", title: "步行回博多阪急 B1 伴手禮街大採購", desc: "買齊長崎蛋糕、可頌、明太子仙貝等伴手禮，直接提回博多飯店放好。", tag: "伴手禮", mapQuery: "Hakata Hankyu" },
+          { time: "19:30 – 21:00", title: "晚餐時間（博多車站周邊）", desc: "預留最後一晚大餐時段！在博多 DEITOS、一番街或頂樓景觀餐廳用餐。", isMeal: true, tag: "用餐時段", mapQuery: "JR HAKATA CITY" },
+          { time: "21:00 之後", title: "回飯店整理行李箱・分類打包托運品", desc: "液體、刀剪與免稅商品妥善裝箱秤重，準備隔天早晨順利返台。", tag: "整理打包", mapQuery: "Hakata Station" }
+        ]
+      },
+      5: {
+        title: "Day 5：晨間元氣朝食 ➔ 福岡機場出境返台",
+        desc: "班機 10:55 起飛。早起在博多車站享用日式朝食，08:45 前準時抵達國際線航廈辦理報到手續與最後免稅採購。",
+        items: [
+          { time: "07:00 – 07:30", title: "飯店辦理退房（Check-out）並攜帶行李至博多車站", desc: "退房手續就緒，推著行李箱由地下連通道前往博多車站。", tag: "退房", mapQuery: "Hakata Station" },
+          { time: "07:30 – 08:20", title: "早餐時間（博多車站周邊朝食）", desc: "預留早餐時段！博多一番街有清晨 07:00 開門的炭火牛舌早餐定食或烏龍麵。", isMeal: true, tag: "晨間朝食", mapQuery: "博多一番街" },
+          { time: "08:20 – 08:45", title: "地鐵 2 站至國內線 ➔ 搭免費接駁車至國際線航廈", desc: "地鐵空港線 5 分鐘抵達國內線，轉接駁車在 08:45 前抵達國際線，安全無塞車風險！", tag: "交通關鍵", mapQuery: "Fukuoka Airport International Terminal" },
+          { time: "08:45 – 10:20", title: "虎航 IT241 報到托運 ➔ 安檢出境 ➔ 免稅店最後補貨", desc: "秤重托運行李、過海關。在免稅店採買冷藏明太子、生巧克力等限定美食。", tag: "出境手續", mapQuery: "Fukuoka Airport Duty Free Shop" },
+          { time: "10:25 – 12:25", title: "10:55 班機起飛（IT241）➔ 12:25 平安返抵台北桃園機場", desc: "滿載美好旅行回憶與戰利品平安抵達台北！", tag: "平安返台", mapQuery: "Taoyuan International Airport" }
+        ]
+      }
+    };
+
+    let activeDay = 1;
+    let onlyMealFilter = false;
+
+    // 安全儲存助手（防止任何環境拋出 SecurityError 導致中斷）
+    const safeStore = {
+      get: (k) => { try { return localStorage.getItem(k); } catch(e) { return null; } },
+      set: (k, v) => { try { localStorage.setItem(k, v); } catch(e) {} },
+      remove: (k) => { try { localStorage.removeItem(k); } catch(e) {} }
+    };
+
+    function init() {
+      try {
+        renderSchedule(activeDay);
+        refreshOverallProgress();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function switchDay(dayNum) {
+      activeDay = dayNum;
+      document.querySelectorAll(".tab-btn").forEach((btn, index) => {
+        btn.classList.toggle("active", index + 1 === dayNum);
+      });
+      renderSchedule(dayNum);
+    }
+
+    function renderSchedule(dayNum) {
+      const data = scheduleData[dayNum];
+      document.getElementById("dayTitleHeader").textContent = data.title;
+      document.getElementById("dayDescHeader").textContent = data.desc;
+
+      const container = document.getElementById("timelineContainer");
+      container.innerHTML = "";
+
+      data.items.forEach((item, index) => {
+        if (onlyMealFilter && !item.isMeal) return;
+
+        const storageKey = `fuk_d${dayNum}_task_${index}`;
+        const isCompleted = safeStore.get(storageKey) === "true";
+
+        const card = document.createElement("article");
+        card.className = `timeline-card ${isCompleted ? "done" : ""} ${item.isMeal ? "is-meal" : ""}`;
+        card.id = `item_card_${dayNum}_${index}`;
+
+        const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.mapQuery)}`;
+
+        card.innerHTML = `
+          <div class="card-top" onclick="toggleTaskStatus(${dayNum}, ${index})">
+            <div>
+              <span class="item-time-tag">${item.time}</span>
+              <h2 class="item-title">${item.title}</h2>
+            </div>
+            <div class="check-btn" title="標記完成"></div>
+          </div>
+          <div class="item-body">
+            <p>${item.desc}</p>
+            <div class="card-actions">
+              ${item.tag ? `<span class="badge-pill">📌 ${item.tag}</span>` : ""}
+              ${item.isMeal ? `<span class="badge-pill" style="background:#FCF4EB; color:#D98A2B;">🍴 用餐預留</span>` : ""}
+              <a href="${mapUrl}" target="_blank" rel="noopener" class="map-link-btn" onclick="event.stopPropagation()">
+                📍 開啟地圖導航
+              </a>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      refreshOverallProgress();
+    }
+
+    function toggleTaskStatus(dayNum, index) {
+      const storageKey = `fuk_d${dayNum}_task_${index}`;
+      const card = document.getElementById(`item_card_${dayNum}_${index}`);
+      const isDone = card.classList.contains("done");
+
+      if (isDone) {
+        card.classList.remove("done");
+        safeStore.remove(storageKey);
+      } else {
+        card.classList.add("done");
+        safeStore.set(storageKey, "true");
+      }
+      refreshOverallProgress();
+    }
+
+    function resetCurrentDay() {
+      scheduleData[activeDay].items.forEach((_, idx) => {
+        safeStore.remove(`fuk_d${activeDay}_task_${idx}`);
+      });
+      renderSchedule(activeDay);
+    }
+
+    function refreshOverallProgress() {
+      let totalTasks = 0;
+      let completedTasks = 0;
+
+      Object.keys(scheduleData).forEach(day => {
+        scheduleData[day].items.forEach((_, idx) => {
+          totalTasks++;
+          if (safeStore.get(`fuk_d${day}_task_${idx}`) === "true") {
+            completedTasks++;
+          }
+        });
+      });
+
+      const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+      document.getElementById("progressFill").style.width = `${percentage}%`;
+      document.getElementById("progressText").textContent = `${completedTasks} / ${totalTasks} (${percentage}%)`;
+    }
+
+    function toggleMealMode() {
+      onlyMealFilter = !onlyMealFilter;
+      document.getElementById("mealFilterBtn").classList.toggle("active", onlyMealFilter);
+      renderSchedule(activeDay);
+    }
+
+    function convertCurrency(jpy) {
+      const rate = 0.215;
+      const amount = parseFloat(jpy);
+      const display = document.getElementById("twdDisplay");
+      if (isNaN(amount) || amount <= 0) {
+        display.textContent = "≈ NT$ 0";
+      } else {
+        display.textContent = `≈ NT$ ${Math.round(amount * rate).toLocaleString()}`;
+      }
+    }
+
+    // 立即啟動
+    init();
+  </script>
+</body>
+</html>
