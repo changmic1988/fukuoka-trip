@@ -6,6 +6,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>秋の福岡散策手帖 ｜ 5 Days Travel Note</title>
+
+  <!-- 匯出專用函式庫：ExcelJS (美化版 Excel) + FileSaver + html2pdf (雜誌風 PDF) -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <style>
     :root {
       --bg-canvas: #FAF8F5;       /* 和紙暖米白 */
@@ -20,7 +26,7 @@
       --tag-bg: #F3ECE2;          /* 標籤淡雅底色 */
       --accent-green: #6B7B6E;    /* 苔蘚綠 */
 
-      /* iOS 原生系統字型 */
+      /* iOS 原生系統字型變數 */
       --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans", "Heiti TC", sans-serif;
       --font-serif: "Songti TC", "Hiragino Mincho ProN", "YuMincho", Georgia, serif;
     }
@@ -251,7 +257,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .kakeibo-box {
       background: var(--card-bg);
@@ -295,6 +301,33 @@
       font-size: 0.8rem;
       text-align: center;
     }
+
+    /* 匯出工具列按鈕樣式 */
+    .export-toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn-export {
+      padding: 9px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-soft);
+      background: var(--card-bg);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: var(--text-main);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      transition: all 0.2s;
+    }
+    .btn-export:active { transform: scale(0.97); }
+    .btn-export-excel { color: #2D6A4F; border-color: #D8E2DC; }
+    .btn-export-pdf { color: var(--autumn-terracotta); border-color: #E8DCCF; }
 
     .kakeibo-form, .trans-box {
       background: var(--card-bg);
@@ -346,7 +379,6 @@
       appearance: none;
       -webkit-appearance: none;
     }
-    /* iOS 原生日期欄位微調 */
     input[type="date"] {
       min-height: 42px;
       line-height: normal;
@@ -570,6 +602,17 @@
       color: var(--text-muted);
       cursor: pointer;
     }
+
+    /* PDF 產生時的隱藏渲染容器（專門用於生成高解析度手帳報表） */
+    #pdf-render-area {
+      display: none;
+      background: #FAF8F5;
+      padding: 32px 28px;
+      color: #342E2B;
+      font-family: var(--font-sans);
+      width: 794px; /* A4 標準比例寬度 */
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
@@ -608,6 +651,7 @@
 
   <!-- 內容區 2：記帳手帳 -->
   <main id="kakeibo-view" class="tab-view">
+    <!-- 總額卡片 -->
     <div class="kakeibo-stats">
       <div class="kakeibo-box">
         <div class="lbl">TOTAL TWD 總支出</div>
@@ -619,12 +663,22 @@
       </div>
     </div>
 
+    <!-- 匯出工具列 -->
+    <div class="export-toolbar">
+      <button class="btn-export btn-export-excel" onclick="exportStyledExcel()">
+        <span>📗 匯出多分頁 Excel</span>
+      </button>
+      <button class="btn-export btn-export-pdf" onclick="exportHandmadePDF()">
+        <span>📄 下載雜誌風 PDF</span>
+      </button>
+    </div>
+
     <div class="rate-bar">
       <span>參考匯率 (JPY ➔ TWD):</span>
       <input type="number" id="current-rate" step="0.001" value="0.215" onchange="adjustRate()">
     </div>
 
-    <!-- 登記卡片（支援自由指定日期） -->
+    <!-- 登記卡片（支援自選日期） -->
     <div class="kakeibo-form">
       <div class="form-title">／ 記錄新消費 ． Entry ／</div>
       
@@ -736,6 +790,9 @@
     </div>
   </div>
 
+  <!-- 用於產生 PDF 的隱藏暫存節點 -->
+  <div id="pdf-render-area"></div>
+
   <script>
     const itineraryPlans = {
       1: [
@@ -831,7 +888,6 @@
 
     document.getElementById('current-rate').value = rate;
 
-    // 設定日期輸入框預設值為今天 (YYYY-MM-DD)
     function resetDateToToday() {
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -911,7 +967,6 @@
       drawRecords();
     }
 
-    // 儲存消費記錄（支援自選日期與自動排序）
     function saveRecord() {
       const dateVal = document.getElementById('k-date').value;
       const name = document.getElementById('k-item').value.trim();
@@ -934,7 +989,6 @@
         jpy = Math.round(amount / rate);
       }
 
-      // 格式化顯示用字串（如 10/16）
       let displayDate = dateVal;
       if (dateVal) {
         const parts = dateVal.split('-');
@@ -945,13 +999,12 @@
 
       const entry = {
         id: Date.now(),
-        rawDate: dateVal || new Date().toISOString().split('T')[0], // 供排序與分組
+        rawDate: dateVal || new Date().toISOString().split('T')[0],
         displayDate: displayDate,
         name, twd, jpy, type, pay
       };
 
       records.push(entry);
-      // 依日期（倒序，由新到舊）排序，若日期相同則依建立時間倒序
       records.sort((a, b) => {
         const da = a.rawDate || '';
         const db = b.rawDate || '';
@@ -972,7 +1025,6 @@
       drawRecords();
     }
 
-    // 繪製手帳式「按日分組」清單與總額統計
     function drawRecords() {
       let totalTwd = 0;
       let totalJpy = 0;
@@ -981,13 +1033,11 @@
       if (records.length === 0) {
         box.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 0.82rem; font-family: var(--font-serif);">尚無消費記錄 ． 請記錄下第一筆旅行回憶</div>`;
       } else {
-        // 先計算總支出
         records.forEach(r => {
           totalTwd += r.twd;
           totalJpy += r.jpy;
         });
 
-        // 依 rawDate 分組
         const grouped = {};
         records.forEach(r => {
           const key = r.rawDate || '其他日期';
@@ -995,7 +1045,6 @@
           grouped[key].push(r);
         });
 
-        // 組裝手帳式 HTML
         let html = '';
         for (const [dateKey, items] of Object.entries(grouped)) {
           let dayTwd = 0;
@@ -1005,7 +1054,6 @@
             dayJpy += it.jpy;
           });
 
-          // 美化日期標題（如 2026-10-16 轉為 10月16日）
           let groupTitle = dateKey;
           if (dateKey.includes('-')) {
             const parts = dateKey.split('-');
@@ -1043,6 +1091,251 @@
       document.getElementById('sum-jpy').innerText = `¥ ${totalJpy.toLocaleString()}`;
     }
 
+    // ====== 匯出功能 1：美化版多分頁 Excel (.xlsx) ======
+    async function exportStyledExcel() {
+      if (records.length === 0) {
+        alert('目前尚無任何記帳資料可匯出！');
+        return;
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = '秋の福岡散策手帖';
+
+      // 和風專屬配色
+      const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC07A4B' } }; // 銀杏琥珀
+      const headerFont = { name: 'PingFang TC', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+      const zebraFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFAF8F5' } }; // 斑馬隔行底色
+      const totalFill  = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF3ECE2' } }; // 統計列底色
+      const totalFont  = { name: 'PingFang TC', size: 11, bold: true, color: { argb: 'FF8C5338' } };
+      const thinBorder = {
+        top: { style: 'thin', color: { argb: 'FFEDE6DE' } },
+        bottom: { style: 'thin', color: { argb: 'FFEDE6DE' } },
+        left: { style: 'thin', color: { argb: 'FFEDE6DE' } },
+        right: { style: 'thin', color: { argb: 'FFEDE6DE' } }
+      };
+
+      const columns = [
+        { header: '消費日期', key: 'date', width: 14 },
+        { header: '支出名目', key: 'item', width: 28 },
+        { header: '分類', key: 'cat', width: 14 },
+        { header: '付款方式', key: 'pay', width: 14 },
+        { header: '台幣 (TWD)', key: 'twd', width: 16 },
+        { header: '日圓 (JPY)', key: 'jpy', width: 16 }
+      ];
+
+      function buildWorksheet(sheet, items, isSummary = false) {
+        sheet.columns = columns;
+
+        const headerRow = sheet.getRow(1);
+        headerRow.height = 28;
+        headerRow.eachCell(cell => {
+          cell.fill = headerFill;
+          cell.font = headerFont;
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+
+        let sumTwd = 0;
+        let sumJpy = 0;
+
+        items.forEach((it, idx) => {
+          sumTwd += it.twd;
+          sumJpy += it.jpy;
+          const row = sheet.addRow({
+            date: it.displayDate || it.rawDate,
+            item: it.name,
+            cat: it.type,
+            pay: it.pay,
+            twd: it.twd,
+            jpy: it.jpy
+          });
+          row.height = 22;
+
+          row.eachCell((cell, colNumber) => {
+            cell.border = thinBorder;
+            cell.font = { name: 'PingFang TC', size: 10 };
+            if (idx % 2 === 1) cell.fill = zebraFill;
+
+            if (colNumber === 1 || colNumber === 3 || colNumber === 4) {
+              cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            } else if (colNumber === 5 || colNumber === 6) {
+              cell.alignment = { vertical: 'middle', horizontal: 'right' };
+              cell.numFmt = '#,##0';
+            } else {
+              cell.alignment = { vertical: 'middle', horizontal: 'left' };
+            }
+          });
+        });
+
+        const totalRow = sheet.addRow({
+          date: isSummary ? '全旅程加總' : '當日小計',
+          item: '',
+          cat: '',
+          pay: '',
+          twd: sumTwd,
+          jpy: sumJpy
+        });
+        totalRow.height = 26;
+
+        totalRow.eachCell((cell, colNumber) => {
+          cell.fill = totalFill;
+          cell.font = totalFont;
+          cell.border = thinBorder;
+          if (colNumber === 5 || colNumber === 6) {
+            cell.alignment = { vertical: 'middle', horizontal: 'right' };
+            cell.numFmt = '#,##0';
+          } else {
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          }
+        });
+      }
+
+      // 1. 生成總覽總表
+      const mainSheet = workbook.addWorksheet('總覽總表');
+      buildWorksheet(mainSheet, records, true);
+
+      // 2. 依日期生成各自的分頁
+      const grouped = {};
+      records.forEach(r => {
+        const k = r.rawDate || '其他日期';
+        if (!grouped[k]) grouped[k] = [];
+        grouped[k].push(r);
+      });
+
+      for (const [dateKey, items] of Object.entries(grouped)) {
+        let sheetName = dateKey;
+        if (dateKey.includes('-')) {
+          const parts = dateKey.split('-');
+          sheetName = `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日`;
+        }
+        const daySheet = workbook.addWorksheet(sheetName);
+        buildWorksheet(daySheet, items, false);
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, `福岡秋日散策_開銷手帳_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    // ====== 匯出功能 2：雜誌風 PDF 手帳報表 ======
+    async function exportHandmadePDF() {
+      if (records.length === 0) {
+        alert('目前尚無任何記帳資料可匯出！');
+        return;
+      }
+
+      let totalTwd = 0;
+      let totalJpy = 0;
+      const catStats = {};
+
+      records.forEach(r => {
+        totalTwd += r.twd;
+        totalJpy += r.jpy;
+        catStats[r.type] = (catStats[r.type] || 0) + r.twd;
+      });
+
+      const grouped = {};
+      records.forEach(r => {
+        const k = r.rawDate || '其他日期';
+        if (!grouped[k]) grouped[k] = [];
+        grouped[k].push(r);
+      });
+
+      // 組裝專屬 A4 日式雜誌排版
+      let groupsHtml = '';
+      for (const [dateKey, items] of Object.entries(grouped)) {
+        let dayTwd = 0;
+        let dayJpy = 0;
+        items.forEach(it => {
+          dayTwd += it.twd;
+          dayJpy += it.jpy;
+        });
+
+        let groupTitle = dateKey;
+        if (dateKey.includes('-')) {
+          const parts = dateKey.split('-');
+          groupTitle = `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日`;
+        }
+
+        groupsHtml += `
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1.5px solid #8C5338; padding-bottom: 4px; margin-bottom: 8px;">
+              <span style="font-family: 'Songti TC', serif; font-size: 15px; font-weight: bold; color: #8C5338;">🗓️ ${groupTitle}</span>
+              <span style="font-size: 12px; color: #8A817C;">當日小計 <strong style="color: #342E2B;">NT$ ${dayTwd.toLocaleString()}</strong> <small>(¥ ${dayJpy.toLocaleString()})</small></span>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+              <thead>
+                <tr style="background: #F3ECE2; color: #8C5338;">
+                  <th style="padding: 6px; text-align: left; border: 1px solid #EDE6DE;">支出名目</th>
+                  <th style="padding: 6px; text-align: center; border: 1px solid #EDE6DE; width: 80px;">分類</th>
+                  <th style="padding: 6px; text-align: center; border: 1px solid #EDE6DE; width: 80px;">付款方式</th>
+                  <th style="padding: 6px; text-align: right; border: 1px solid #EDE6DE; width: 110px;">台幣 (TWD)</th>
+                  <th style="padding: 6px; text-align: right; border: 1px solid #EDE6DE; width: 110px;">日圓 (JPY)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map((it, idx) => `
+                  <tr style="background: ${idx % 2 === 1 ? '#FAF8F5' : '#FFFFFF'};">
+                    <td style="padding: 6px; border: 1px solid #EDE6DE;">${it.name}</td>
+                    <td style="padding: 6px; text-align: center; border: 1px solid #EDE6DE; color: #8A817C;">${it.type}</td>
+                    <td style="padding: 6px; text-align: center; border: 1px solid #EDE6DE; color: #8A817C;">${it.pay}</td>
+                    <td style="padding: 6px; text-align: right; border: 1px solid #EDE6DE; font-weight: 600;">NT$ ${it.twd.toLocaleString()}</td>
+                    <td style="padding: 6px; text-align: right; border: 1px solid #EDE6DE; color: #8A817C;">¥ ${it.jpy.toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      const renderBox = document.getElementById('pdf-render-area');
+      renderBox.style.display = 'block';
+      renderBox.innerHTML = `
+        <div style="text-align: center; margin-bottom: 22px; border-bottom: 2px solid #C07A4B; padding-bottom: 14px;">
+          <div style="font-size: 11px; letter-spacing: 0.25em; color: #C07A4B; text-transform: uppercase; font-family: 'Songti TC', serif; font-weight: 600;">Travel Note 01 ｜ Autumn Leaves</div>
+          <h1 style="font-family: 'Songti TC', serif; font-size: 26px; color: #342E2B; margin: 4px 0 6px;">福岡秋日散策 ． 旅費手帳結算單</h1>
+          <div style="font-size: 12px; color: #8A817C;">2026.10.16 – 10.20 ｜ Hakata & Beyond ｜ 匯率基準: ${rate}</div>
+        </div>
+
+        <div style="display: flex; gap: 14px; margin-bottom: 20px;">
+          <div style="flex: 1; background: #FFF; border: 1px solid #EDE6DE; border-radius: 6px; padding: 12px 16px;">
+            <div style="font-size: 11px; color: #8A817C; font-family: 'Songti TC', serif;">TOTAL TWD 總支出</div>
+            <div style="font-family: 'Songti TC', serif; font-size: 24px; font-weight: bold; color: #8C5338;">NT$ ${totalTwd.toLocaleString()}</div>
+          </div>
+          <div style="flex: 1; background: #FFF; border: 1px solid #EDE6DE; border-radius: 6px; padding: 12px 16px;">
+            <div style="font-size: 11px; color: #8A817C; font-family: 'Songti TC', serif;">TOTAL JPY 日幣換算</div>
+            <div style="font-family: 'Songti TC', serif; font-size: 24px; font-weight: bold; color: #8C5338;">¥ ${totalJpy.toLocaleString()}</div>
+          </div>
+        </div>
+
+        <div>
+          ${groupsHtml}
+        </div>
+
+        <div style="margin-top: 24px; text-align: center; font-size: 10px; color: #8A817C; border-top: 1px solid #EDE6DE; padding-top: 10px;">
+          秋の福岡散策手帖 ． 旅途美好回憶留存
+        </div>
+      `;
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `福岡秋日散策_結算報表_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      try {
+        await html2pdf().set(opt).from(renderBox).save();
+      } catch (e) {
+        alert('PDF 匯出失敗，請重試或確認瀏覽器支援！');
+      } finally {
+        renderBox.style.display = 'none';
+        renderBox.innerHTML = '';
+      }
+    }
+
+    // ====== 翻譯模組 ======
     async function performTranslation() {
       const text = document.getElementById('trans-input').value.trim();
       if(!text) {
@@ -1189,6 +1482,7 @@
       }
     }
 
+    // 初始載入
     drawPlans();
     drawRecords();
     renderPhrases();
