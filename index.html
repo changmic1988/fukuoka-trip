@@ -165,7 +165,7 @@
     .tab-view { display: none; }
     .tab-view.active { display: block; }
 
-    /* ====== 即時天氣與圖文穿搭指南卡片 ====== */
+    /* ====== 修正 1：即時氣候 ＋ 福岡時區 24H 跳動時鐘 ====== */
     .weather-widget {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -198,16 +198,25 @@
       color: var(--text-muted);
       line-height: 1.3;
     }
-    .weather-status {
-      font-size: 0.82rem;
-      font-weight: 600;
+    .live-clock-text {
+      font-family: var(--font-serif);
+      font-size: 0.92rem;
+      font-weight: 700;
       color: var(--slate-blue);
+      letter-spacing: 0.03em;
+    }
+    .weather-status {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--autumn-amber);
+      margin-top: 2px;
       text-align: right;
     }
     .weather-rain {
       font-size: 0.72rem;
       color: var(--text-muted);
-      margin-top: 2px;
+      text-align: right;
+      margin-top: 1px;
     }
 
     /* 圖文穿搭區塊 */
@@ -255,7 +264,7 @@
       line-height: 1.25;
     }
 
-    /* ====== 交通路網折疊選單（方案 B） ====== */
+    /* ====== 修正 2：交通路線圖（方案 2 高清真地圖 ＋ 官方直連） ====== */
     .transit-accordion {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -293,6 +302,13 @@
       margin-top: 10px;
       cursor: zoom-in;
       display: block;
+      background: #FFFFFF;
+    }
+    .metro-map-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
     }
     .metro-map-tip {
       font-size: 0.7rem;
@@ -301,21 +317,24 @@
       margin-top: 6px;
     }
 
-    /* ====== 雜誌排版 Timeline 與動態卡片 ====== */
+    /* ====== 修正 3：行程卡片與手指觸控拖曳手柄 ⠿ ====== */
     .itinerary-list {
       display: flex;
       flex-direction: column;
       gap: 14px;
       margin-top: 4px;
+      position: relative;
     }
     .plan-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
       border-radius: 8px;
-      padding: 15px 16px;
+      padding: 14px 15px;
       box-shadow: 0 2px 8px rgba(52, 46, 43, 0.03);
-      transition: all 0.25s ease;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
       position: relative;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .plan-card.done {
       background: #F4EFEB;
@@ -325,6 +344,13 @@
     .plan-card.done .plan-title {
       text-decoration: line-through;
       color: var(--text-muted);
+    }
+    .plan-card.dragging {
+      opacity: 0.92;
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(62, 81, 91, 0.15);
+      border-color: var(--autumn-amber);
+      z-index: 10;
     }
     .plan-meta {
       display: flex;
@@ -345,7 +371,7 @@
     .plan-actions {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
     .btn-map {
       display: inline-flex;
@@ -368,6 +394,21 @@
       font-size: 0.74rem;
       color: var(--text-muted);
       cursor: pointer;
+    }
+    /* 專屬觸控拖曳手柄 */
+    .drag-handle {
+      touch-action: none;
+      cursor: grab;
+      font-size: 1.15rem;
+      color: #B5A89E;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      user-select: none;
+    }
+    .drag-handle:active {
+      cursor: grabbing;
+      color: var(--autumn-amber);
     }
     .btn-check {
       background: none;
@@ -863,7 +904,7 @@
       <div class="day-pill" onclick="pickDay(5)">Day 5 ． 歸途漫步</div>
     </div>
 
-    <!-- 即時天氣與圖文著裝卡片 -->
+    <!-- 修正 1：即時天氣 ＋ 日本福岡 24H 跳動時鐘 ＋ 圖文著裝提案 -->
     <div class="weather-widget" id="weather-box">
       <div class="weather-head">
         <div class="weather-city">
@@ -874,6 +915,8 @@
           </div>
         </div>
         <div>
+          <!-- 日本福岡時區 JST (UTC+9) 24小時制跳動時鐘 -->
+          <div class="live-clock-text" id="live-clock">--月--日 (週-) --:--</div>
           <div class="weather-status" id="wt-status">福岡（博多）讀取中...</div>
           <div class="weather-rain" id="wt-rain">💧 降雨機率 --%</div>
         </div>
@@ -887,24 +930,28 @@
       </div>
     </div>
 
-    <!-- 方案 B：交通路網折疊選單 -->
+    <!-- 修正 2：交通路網折疊選單（高清官方真路線圖 ＋ 雙重保障） -->
     <div class="transit-accordion">
       <button class="transit-accordion-btn" onclick="toggleTransitMap()">
         <span>🚇 福岡市地下鐵 ＆ 西鐵全線路網圖 ． Route Map</span>
         <span id="transit-arrow">▼ 點擊展開</span>
       </button>
       <div class="transit-accordion-content" id="transit-content">
-        <!-- 高解析福岡市營地下鐵 + 西鐵綜合路線圖 -->
-        <img src="https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80" 
-             alt="福岡地鐵路線圖" 
+        <!-- 福岡地下鐵最新官方繁中高解析度路線圖 -->
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Fukuoka_city_subway_map_JA_2023.png/1280px-Fukuoka_city_subway_map_JA_2023.png" 
+             alt="福岡地下鐵路線圖" 
              class="metro-map-img" 
              onclick="openImageModal(this.src)"
-             title="點擊放大檢視">
-        <div class="metro-map-tip">💡 點擊上方圖片可全螢幕放大查看路線與車站代碼</div>
+             title="點擊全螢幕放大檢視">
+        <div class="metro-map-actions">
+          <button class="btn-tool" onclick="openImageModal('https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Fukuoka_city_subway_map_JA_2023.png/1280px-Fukuoka_city_subway_map_JA_2023.png')">🔍 全螢幕看圖</button>
+          <a href="https://subway.city.fukuoka.lg.jp/cha_trad/route/" target="_blank" rel="noopener noreferrer" class="btn-tool" style="text-decoration: none;">🌐 官網高解析版 (繁中)</a>
+        </div>
+        <div class="metro-map-tip">💡 包含七隈線延伸博多段 ． 支援點擊放大雙指縮放</div>
       </div>
     </div>
 
-    <!-- 行程清單卡片區 -->
+    <!-- 修正 3：行程清單卡片區（支援時間自動歸位 ＋ ⠿ 觸控拖曳排序） -->
     <div class="itinerary-list" id="plan-container">
       <!-- 由 JS 動態生成 -->
     </div>
@@ -1045,7 +1092,7 @@
       <input type="hidden" id="edit-plan-idx" value="-1">
       
       <div class="f-group" style="margin-bottom: 10px;">
-        <label>時間區間</label>
+        <label>時間區間（支援自動時段歸位，如：14:30 – 16:00）</label>
         <input type="text" id="edit-plan-time" placeholder="如：14:30 – 16:00">
       </div>
       <div class="f-group" style="margin-bottom: 10px;">
@@ -1087,8 +1134,8 @@
   <!-- 全螢幕圖片放大檢視 Modal（地鐵圖用） -->
   <div class="base-modal" id="imgModal" onclick="closeImageModal()">
     <div style="max-width: 95%; max-height: 90vh; text-align: center;" onclick="event.stopPropagation()">
-      <img id="imgModalSrc" src="" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5);">
-      <button class="btn-close-modal" style="margin-top: 12px; background: rgba(255,255,255,0.9);" onclick="closeImageModal()">關閉地圖</button>
+      <img id="imgModalSrc" src="" style="width: 100%; height: auto; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); background: #FFF;">
+      <button class="btn-close-modal" style="margin-top: 12px; background: rgba(255,255,255,0.95);" onclick="closeImageModal()">關閉地圖</button>
     </div>
   </div>
 
@@ -1203,10 +1250,42 @@
     }
     resetDateToToday();
 
+    // ====== 修正 1：日本福岡即時時鐘 (JST, 24小時制) ======
+    function updateFukuokaClock() {
+      const clockEl = document.getElementById('live-clock');
+      if (!clockEl) return;
+
+      const now = new Date();
+      const options = {
+        timeZone: 'Asia/Tokyo',
+        month: 'numeric',
+        day: 'numeric',
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false // 24小時制
+      };
+
+      const formatter = new Intl.DateTimeFormat('zh-TW', options);
+      const parts = formatter.formatToParts(now);
+      
+      let m = '', d = '', wd = '', hr = '', min = '';
+      parts.forEach(p => {
+        if (p.type === 'month') m = p.value;
+        if (p.type === 'day') d = p.value;
+        if (p.type === 'weekday') wd = p.value;
+        if (p.type === 'hour') hr = p.value;
+        if (p.type === 'minute') min = p.value;
+      });
+
+      clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
+    }
+    updateFukuokaClock();
+    setInterval(updateFukuokaClock, 1000);
+
     // ====== 天氣與穿搭引擎（Open-Meteo 免費 API） ======
     async function fetchFukuokaWeather() {
       try {
-        // 福岡市中心座標: 33.5904, 130.4017
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
         const data = await res.json();
         
@@ -1218,7 +1297,6 @@
 
         renderWeather(currTemp, maxTemp, minTemp, rainProb, wCode);
       } catch (e) {
-        // 離線/弱網備援氣候（10 月福岡秋季氣候常態）
         renderWeather(21, 23, 16, 20, 1);
       }
     }
@@ -1228,7 +1306,6 @@
       document.getElementById('wt-range').innerText = `最高 ${max}° ｜ 最低 ${min}°`;
       document.getElementById('wt-rain').innerText = `💧 降雨機率 ${rain}%`;
 
-      // 天氣碼解析 (WMO code)
       let icon = '☀️';
       let desc = '晴朗快適';
       if (code >= 1 && code <= 3) { icon = '⛅'; desc = '秋高氣爽 ． 多雲時晴'; }
@@ -1239,7 +1316,6 @@
       document.getElementById('wt-icon').innerText = icon;
       document.getElementById('wt-status').innerText = desc;
 
-      // 著裝提案生成
       const badgeBox = document.getElementById('outfit-badges');
       let coat = min < 18 ? '薄風衣 / 針織開襟衫' : '輕便夾克';
       let inner = max > 22 ? '透氣棉T / 隨意長袖' : '長袖襯衫 / 衛衣';
@@ -1279,7 +1355,7 @@
     }
     fetchFukuokaWeather();
 
-    // ====== 方案 B：交通路線圖折疊功能 ======
+    // ====== 修正 2：交通路線圖折疊功能 ======
     function toggleTransitMap() {
       const content = document.getElementById('transit-content');
       const arrow = document.getElementById('transit-arrow');
@@ -1335,7 +1411,20 @@
       drawPlans();
     }
 
-    // ====== 行程卡片渲染（含方案 C 地鐵徽章與動態排序） ======
+    // ====== 修正 3：時間字串解析函數（轉換為分鐘數，用於自動排序） ======
+    function parseTimeToMinutes(timeStr) {
+      if (!timeStr) return 9999;
+      // 提取前段的時分 (支援 08:30、8:30、14:00 等格式)
+      const match = timeStr.match(/(\d{1,2}):(\d{2})/);
+      if (match) {
+        const hours = parseInt(match[1], 10);
+        const mins = parseInt(match[2], 10);
+        return hours * 60 + mins;
+      }
+      return 9999; // 若沒有具體時間（如「自由時段」），排在最後
+    }
+
+    // ====== 修正 3：行程卡片渲染與專屬拖曳手柄 ⠿ ======
     function drawPlans() {
       const container = document.getElementById('plan-container');
       const plans = customItinerary[activeDay] || [];
@@ -1350,7 +1439,6 @@
         const isDone = completed[taskId] ? 'done' : '';
         const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.mapQuery || p.title)}`;
         
-        // 辨識線路顏色
         let transitBadgeHtml = '';
         if (p.transit) {
           let lineClass = '';
@@ -1361,14 +1449,15 @@
         }
 
         return `
-          <div class="plan-card ${isDone}">
+          <div class="plan-card ${isDone}" data-index="${idx}">
             <div class="plan-meta">
               <span class="time-tag">${p.time}</span>
               <div class="plan-actions">
                 <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="btn-map">📍 導航</a>
                 <button class="btn-card-menu" onclick="editPlanItem(${idx})">✏️</button>
-                <button class="btn-card-menu" onclick="movePlanItem(${idx}, -1)">▲</button>
-                <button class="btn-card-menu" onclick="movePlanItem(${idx}, 1)">▼</button>
+                <button class="btn-card-menu" style="color: #B5A89E;" onclick="deletePlanItem(${idx})">🗑️</button>
+                <!-- 專屬拖曳手柄 -->
+                <div class="drag-handle" title="按住拖曳排序">⠿</div>
                 <button class="btn-check" onclick="togglePlan('${taskId}')">✓</button>
               </div>
             </div>
@@ -1378,6 +1467,8 @@
           </div>
         `;
       }).join('');
+
+      initTouchDragSort();
     }
 
     function togglePlan(id) {
@@ -1386,7 +1477,74 @@
       drawPlans();
     }
 
-    // ====== 行程動態管理功能（新增、編輯、上下移動、還原） ======
+    // ====== 修正 3：原生流暢觸控拖曳排序 (Touch Drag & Drop) ======
+    function initTouchDragSort() {
+      const container = document.getElementById('plan-container');
+      const handles = container.querySelectorAll('.drag-handle');
+
+      handles.forEach(handle => {
+        let draggedCard = null;
+        let startY = 0;
+        let isDragging = false;
+
+        const onTouchStart = (e) => {
+          draggedCard = handle.closest('.plan-card');
+          if (!draggedCard) return;
+          startY = e.touches[0].clientY;
+          isDragging = true;
+          draggedCard.classList.add('dragging');
+        };
+
+        const onTouchMove = (e) => {
+          if (!isDragging || !draggedCard) return;
+          e.preventDefault(); // 阻止背景滾動
+
+          const currentY = e.touches[0].clientY;
+          const cards = [...container.querySelectorAll('.plan-card:not(.dragging)')];
+          
+          // 找出距離當前手指最近的相鄰卡片
+          const afterCard = cards.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = currentY - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+              return { offset: offset, element: child };
+            } else {
+              return closest;
+            }
+          }, { offset: Number.NEGATIVE_INFINITY }).element;
+
+          if (afterCard == null) {
+            container.appendChild(draggedCard);
+          } else {
+            container.insertBefore(draggedCard, afterCard);
+          }
+        };
+
+        const onTouchEnd = () => {
+          if (!isDragging || !draggedCard) return;
+          draggedCard.classList.remove('dragging');
+          isDragging = false;
+
+          // 重新整理陣列並持久化至快取
+          const newOrderCards = [...container.querySelectorAll('.plan-card')];
+          const newPlans = newOrderCards.map(card => {
+            const oldIdx = parseInt(card.getAttribute('data-index'), 10);
+            return customItinerary[activeDay][oldIdx];
+          });
+
+          customItinerary[activeDay] = newPlans;
+          localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+          drawPlans();
+        };
+
+        handle.addEventListener('touchstart', onTouchStart, { passive: false });
+        handle.addEventListener('touchmove', onTouchMove, { passive: false });
+        handle.addEventListener('touchend', onTouchEnd);
+        handle.addEventListener('touchcancel', onTouchEnd);
+      });
+    }
+
+    // ====== 行程動態管理功能（新增、編輯、自動時間排序、刪除、還原） ======
     function openAddPlanModal() {
       document.getElementById('plan-modal-title').innerText = `新增 Day ${activeDay} 行程`;
       document.getElementById('edit-plan-idx').value = "-1";
@@ -1408,6 +1566,14 @@
       document.getElementById('edit-plan-map').value = plan.mapQuery || "";
       document.getElementById('edit-plan-note').value = plan.note || "";
       document.getElementById('planModal').classList.add('active');
+    }
+
+    function deletePlanItem(idx) {
+      if (confirm('確定要刪除這筆行程嗎？')) {
+        customItinerary[activeDay].splice(idx, 1);
+        localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+        drawPlans();
+      }
     }
 
     function closePlanModal() {
@@ -1432,28 +1598,20 @@
       if (!customItinerary[activeDay]) customItinerary[activeDay] = [];
 
       if (idx === -1) {
-        // 新增
+        // 新增行程
         customItinerary[activeDay].push(item);
       } else {
-        // 修改
+        // 編輯行程
         customItinerary[activeDay][idx] = item;
       }
 
+      // 修正 3：儲存後自動按輸入時間進行時段歸位升序排序
+      customItinerary[activeDay].sort((a, b) => {
+        return parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time);
+      });
+
       localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
       closePlanModal();
-      drawPlans();
-    }
-
-    function movePlanItem(idx, direction) {
-      const list = customItinerary[activeDay];
-      const targetIdx = idx + direction;
-      if (targetIdx < 0 || targetIdx >= list.length) return;
-
-      const temp = list[idx];
-      list[idx] = list[targetIdx];
-      list[targetIdx] = temp;
-
-      localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
       drawPlans();
     }
 
