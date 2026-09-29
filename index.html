@@ -2,13 +2,10 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>秋の福岡散策手帖 ｜ 5 Days Travel Note</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Zen+Old+Mincho:wght@400;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-canvas: #FAF8F5;       /* 和紙暖米白 */
@@ -22,36 +19,51 @@
       --border-soft: #EDE6DE;     /* 亞麻線條 */
       --tag-bg: #F3ECE2;          /* 標籤淡雅底色 */
       --accent-green: #6B7B6E;    /* 苔蘚綠 */
+
+      /* iOS 原生系統字型變數 */
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans", "Heiti TC", sans-serif;
+      --font-serif: "Songti TC", "Hiragino Mincho ProN", "YuMincho", Georgia, serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden; /* 徹底杜絕手機橫向滑動溢出 */
+    }
+
     body {
       background-color: var(--bg-canvas);
       color: var(--text-main);
-      font-family: 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
-      padding-bottom: 90px;
+      font-family: var(--font-sans);
+      padding-bottom: calc(90px + env(safe-area-inset-bottom));
       -webkit-font-smoothing: antialiased;
       line-height: 1.6;
     }
 
     /* 雜誌風封面 Header */
     header {
-      padding: 38px 24px 22px;
+      padding: calc(34px + env(safe-area-inset-top)) 20px 20px;
       background-color: var(--bg-canvas);
       border-bottom: 1px solid var(--border-soft);
       position: relative;
     }
     .mag-issue {
-      font-family: 'Zen Old Mincho', serif;
-      font-size: 0.68rem;
+      font-family: var(--font-serif);
+      font-size: 0.7rem;
       letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--autumn-amber);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-weight: 600;
     }
     header h1 {
-      font-family: 'Zen Old Mincho', 'Noto Serif TC', serif;
+      font-family: var(--font-serif);
       font-size: 1.65rem;
       font-weight: 700;
       letter-spacing: 0.05em;
@@ -68,14 +80,14 @@
       letter-spacing: 0.04em;
     }
     .mag-sub span:last-child {
-      font-family: 'Zen Old Mincho', serif;
+      font-family: var(--font-serif);
       font-style: italic;
     }
 
     /* 頁籤切換：三欄雜誌選單 */
     nav {
       display: flex;
-      margin: 18px 20px 8px;
+      margin: 14px 16px 8px;
       border-bottom: 1px solid var(--border-soft);
     }
     nav button {
@@ -83,9 +95,9 @@
       padding: 10px 0;
       border: none;
       background: none;
-      font-family: 'Zen Old Mincho', serif;
-      font-size: 0.86rem;
-      letter-spacing: 0.08em;
+      font-family: var(--font-serif);
+      font-size: 0.88rem;
+      letter-spacing: 0.05em;
       color: var(--text-muted);
       cursor: pointer;
       position: relative;
@@ -99,8 +111,8 @@
       content: '';
       position: absolute;
       bottom: -1px;
-      left: 15%;
-      right: 15%;
+      left: 12%;
+      right: 12%;
       height: 2px;
       background-color: var(--autumn-terracotta);
     }
@@ -109,19 +121,20 @@
     .day-selector {
       display: flex;
       gap: 10px;
-      padding: 12px 20px 16px;
+      padding: 12px 16px 16px;
       overflow-x: auto;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
     .day-selector::-webkit-scrollbar { display: none; }
     .day-pill {
       flex: 0 0 auto;
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-size: 0.78rem;
-      letter-spacing: 0.05em;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
       color: var(--text-muted);
       cursor: pointer;
       transition: all 0.2s;
@@ -133,7 +146,11 @@
       box-shadow: 0 3px 8px rgba(140, 83, 56, 0.18);
     }
 
-    main { padding: 0 20px; }
+    main { 
+      padding: 0 16px; 
+      max-width: 600px;
+      margin: 0 auto;
+    }
     .tab-view { display: none; }
     .tab-view.active { display: block; }
 
@@ -141,15 +158,15 @@
     .itinerary-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       margin-top: 6px;
     }
     .plan-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 6px;
-      padding: 16px 16px 14px;
-      box-shadow: 0 2px 8px rgba(52, 46, 43, 0.02);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(52, 46, 43, 0.03);
       transition: all 0.25s ease;
       position: relative;
     }
@@ -169,44 +186,39 @@
       margin-bottom: 8px;
     }
     .time-tag {
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      font-family: 'Zen Old Mincho', serif;
+      font-size: 0.74rem;
+      letter-spacing: 0.05em;
+      font-family: var(--font-serif);
       font-weight: 600;
       color: var(--autumn-terracotta);
       background: var(--tag-bg);
       padding: 2px 8px;
-      border-radius: 2px;
+      border-radius: 4px;
     }
     .plan-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     .btn-map {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       color: var(--slate-blue);
       text-decoration: none;
       background: var(--tag-bg);
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 4px;
       border: 1px solid var(--border-soft);
       font-weight: 500;
-      letter-spacing: 0.02em;
       transition: all 0.2s;
-    }
-    .btn-map:hover {
-      background: var(--slate-blue);
-      color: #FFF;
     }
     .btn-check {
       background: none;
       border: 1px solid var(--border-soft);
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       cursor: pointer;
       display: flex;
@@ -222,46 +234,47 @@
       color: white;
     }
     .plan-title {
-      font-size: 0.96rem;
+      font-size: 0.98rem;
       font-weight: 600;
       color: var(--text-main);
       margin-bottom: 6px;
-      letter-spacing: 0.02em;
       line-height: 1.45;
     }
     .plan-note {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
       line-height: 1.55;
-      font-weight: 400;
     }
 
     /* 開銷手帳（Kakeibo）樣式 */
     .kakeibo-stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 18px;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     .kakeibo-box {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 6px;
-      padding: 14px 16px;
+      border-radius: 8px;
+      padding: 14px 12px;
       text-align: left;
     }
     .kakeibo-box .lbl {
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
+      font-size: 0.68rem;
+      letter-spacing: 0.05em;
       color: var(--text-muted);
-      font-family: 'Zen Old Mincho', serif;
+      font-family: var(--font-serif);
       margin-bottom: 4px;
     }
     .kakeibo-box .val {
-      font-family: 'Zen Old Mincho', serif;
-      font-size: 1.25rem;
+      font-family: var(--font-serif);
+      font-size: 1.2rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .rate-bar {
@@ -270,46 +283,78 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 14px;
-      font-size: 0.74rem;
+      font-size: 0.75rem;
       color: var(--text-muted);
     }
     .rate-bar input {
-      width: 60px;
-      padding: 3px 6px;
+      width: 70px;
+      padding: 4px 6px;
       border: 1px solid var(--border-soft);
       background: #FFF;
       border-radius: 4px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       text-align: center;
     }
 
+    /* 記帳表單容器防跑版修正 */
     .kakeibo-form, .trans-box {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 16px;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .form-title {
-      font-family: 'Zen Old Mincho', serif;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
+      font-family: var(--font-serif);
+      font-size: 0.86rem;
+      letter-spacing: 0.06em;
       color: var(--slate-blue);
       margin-bottom: 12px;
       font-weight: 600;
     }
-    .f-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .f-group { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .f-group label { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.04em; }
+
+    /* 表單格線系統重構（解決 iPhone 橫向擠爆） */
+    .f-row { 
+      display: flex; 
+      gap: 10px; 
+      margin-bottom: 12px; 
+      width: 100%;
+    }
+    .f-group { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 5px; 
+      min-width: 0; /* 關鍵：防止 flex 子元件被內部 input 撐破 */
+    }
+    .f-group label { 
+      font-size: 0.72rem; 
+      color: var(--text-muted); 
+    }
+
+    /* iOS 最佳化 input / select（避免點擊自動放大） */
     input, select, textarea {
-      padding: 8px 10px;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 10px;
       border: 1px solid var(--border-soft);
-      border-radius: 4px;
+      border-radius: 6px;
       background: #FAF8F5;
-      font-size: 0.82rem;
+      font-size: 16px; /* 關鍵：設為 16px 即可完全防止 iOS Safari 放大畫面跑版 */
       color: var(--text-main);
       outline: none;
-      font-family: inherit;
+      font-family: var(--font-sans);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A817C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      background-size: 14px;
+      padding-right: 26px;
     }
     input:focus, select:focus, textarea:focus {
       border-color: var(--autumn-amber);
@@ -320,16 +365,16 @@
       background: var(--autumn-amber);
       color: white;
       border: none;
-      padding: 9px;
-      font-size: 0.84rem;
-      letter-spacing: 0.1em;
-      border-radius: 4px;
+      padding: 12px;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      border-radius: 6px;
       cursor: pointer;
       margin-top: 4px;
-      font-family: 'Zen Old Mincho', serif;
+      font-family: var(--font-serif);
       transition: background 0.2s;
     }
-    .btn-add:hover { background: var(--autumn-terracotta); }
+    .btn-add:active { background: var(--autumn-terracotta); }
 
     /* 支出手帳清單 */
     .kakeibo-records {
@@ -341,25 +386,24 @@
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
       padding: 12px 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .rec-main { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
+    .rec-main { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
     .rec-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
-    .rec-right { display: flex; align-items: center; gap: 10px; text-align: right; }
-    .rec-twd { font-family: 'Zen Old Mincho', serif; font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
+    .rec-right { display: flex; align-items: center; gap: 12px; text-align: right; }
+    .rec-twd { font-family: var(--font-serif); font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
     .rec-jpy { font-size: 0.72rem; color: var(--text-muted); }
     .btn-del {
       border: none;
       background: none;
       color: #B5A89E;
       cursor: pointer;
-      font-size: 0.9rem;
-      padding: 2px 4px;
+      font-size: 1.1rem;
+      padding: 4px;
     }
-    .btn-del:hover { color: #E74C3C; }
 
     /* 翻譯介面專屬樣式 */
     .trans-result-card {
@@ -388,18 +432,15 @@
     .btn-tool {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      padding: 5px 12px;
+      padding: 6px 12px;
       border-radius: 4px;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: var(--slate-blue);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      transition: all 0.2s;
     }
-    .btn-tool:hover { background: var(--tag-bg); }
-    .btn-tool:active { transform: scale(0.96); }
 
     /* 常用救急手指卡 */
     .phrase-category-nav {
@@ -408,13 +449,14 @@
       overflow-x: auto;
       margin: 12px 0 14px;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
     }
     .phrase-category-nav::-webkit-scrollbar { display: none; }
     .phrase-cat-pill {
       flex: 0 0 auto;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
-      font-size: 0.76rem;
+      font-size: 0.78rem;
       background: var(--tag-bg);
       color: var(--text-muted);
       cursor: pointer;
@@ -432,19 +474,17 @@
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
       padding: 12px 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: pointer;
-      transition: all 0.2s;
     }
     .phrase-card:active {
-      transform: scale(0.99);
       background: #FAF8F5;
     }
     .phrase-zh { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
-    .phrase-ja { font-size: 0.8rem; color: var(--autumn-amber); margin-top: 2px; }
+    .phrase-ja { font-size: 0.82rem; color: var(--autumn-amber); margin-top: 2px; }
 
     /* 全螢幕大字 Modal */
     .big-modal {
@@ -463,19 +503,19 @@
       border-radius: 12px;
       padding: 30px 20px;
       width: 100%;
-      max-width: 360px;
+      max-width: 340px;
       text-align: center;
       box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
     .big-ja {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
       line-height: 1.4;
       margin-bottom: 12px;
     }
     .big-zh {
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: var(--text-muted);
       margin-bottom: 24px;
     }
@@ -483,20 +523,18 @@
       background: var(--slate-blue);
       color: #FFF;
       border: none;
-      padding: 10px 20px;
+      padding: 11px 22px;
       border-radius: 20px;
       font-size: 0.9rem;
       cursor: pointer;
-      margin-bottom: 10px;
-      transition: all 0.2s;
+      margin-bottom: 12px;
     }
-    .btn-big-voice:active { transform: scale(0.96); }
     .btn-close-modal {
       background: none;
       border: 1px solid var(--border-soft);
-      padding: 6px 18px;
+      padding: 6px 20px;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
       cursor: pointer;
     }
@@ -516,9 +554,9 @@
 
   <!-- 雜誌三欄導航 -->
   <nav>
-    <button class="active" onclick="switchMagazineTab('itinerary')">日程編排 ． Plan</button>
-    <button onclick="switchMagazineTab('kakeibo')">旅費手帳 ． Expense</button>
-    <button onclick="switchMagazineTab('translate')">實用語 ． Translate</button>
+    <button class="active" onclick="switchMagazineTab('itinerary', this)">日程編排 ． Plan</button>
+    <button onclick="switchMagazineTab('kakeibo', this)">旅費手帳 ． Expense</button>
+    <button onclick="switchMagazineTab('translate', this)">實用語 ． Translate</button>
   </nav>
 
   <!-- 內容區 1：行程列表 -->
@@ -554,15 +592,17 @@
       <input type="number" id="current-rate" step="0.001" value="0.215" onchange="adjustRate()">
     </div>
 
-    <!-- 登記卡片 -->
+    <!-- 登記卡片（重構為適合手機寬度的 2 欄佈局） -->
     <div class="kakeibo-form">
       <div class="form-title">／ 記錄新消費 ． Entry ／</div>
+      
+      <!-- 第一排：項目與幣別 -->
       <div class="f-row">
         <div class="f-group" style="flex: 2;">
           <label>支出名目</label>
-          <input type="text" id="k-item" placeholder="如：とめ手羽 雞翅居酒屋">
+          <input type="text" id="k-item" placeholder="如：とめ手羽 雞翅">
         </div>
-        <div class="f-group" style="flex: 1;">
+        <div class="f-group" style="flex: 1.2;">
           <label>幣別</label>
           <select id="k-curr">
             <option value="JPY">日圓 (¥)</option>
@@ -571,11 +611,16 @@
         </div>
       </div>
 
+      <!-- 第二排：金額 -->
       <div class="f-row">
         <div class="f-group">
           <label>金額</label>
-          <input type="number" id="k-amount" placeholder="0">
+          <input type="number" id="k-amount" inputmode="decimal" placeholder="0">
         </div>
+      </div>
+
+      <!-- 第三排：分類與付款方式並排 -->
+      <div class="f-row">
         <div class="f-group">
           <label>分類</label>
           <select id="k-type">
@@ -596,6 +641,7 @@
           </select>
         </div>
       </div>
+
       <button class="btn-add" onclick="saveRecord()">記帳 ． RECORD</button>
     </div>
 
@@ -624,10 +670,10 @@
     <!-- 離線救急手指卡片區 -->
     <div class="form-title" style="margin-top: 14px;">／ 旅人必備情境手指卡 ． Emergency Phrases ／</div>
     <div class="phrase-category-nav">
-      <div class="phrase-cat-pill active" onclick="pickPhraseCat('dining')">點餐美食</div>
-      <div class="phrase-cat-pill" onclick="pickPhraseCat('transit')">交通問路</div>
-      <div class="phrase-cat-pill" onclick="pickPhraseCat('shopping')">購物退稅</div>
-      <div class="phrase-cat-pill" onclick="pickPhraseCat('hotel')">飯店住宿</div>
+      <div class="phrase-cat-pill active" onclick="pickPhraseCat('dining', this)">點餐美食</div>
+      <div class="phrase-cat-pill" onclick="pickPhraseCat('transit', this)">交通問路</div>
+      <div class="phrase-cat-pill" onclick="pickPhraseCat('shopping', this)">購物退稅</div>
+      <div class="phrase-cat-pill" onclick="pickPhraseCat('hotel', this)">飯店住宿</div>
     </div>
 
     <div class="phrase-grid" id="phrase-list-container">
@@ -650,7 +696,6 @@
   </div>
 
   <script>
-    // 完整 5 天行程資料庫
     const itineraryPlans = {
       1: [
         { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，提領行李。" },
@@ -707,7 +752,6 @@
       ]
     };
 
-    // 常用情境日語資料庫
     const phraseDatabase = {
       dining: [
         { zh: "請給我中文菜單", ja: "中国語のメニューはありますか？" },
@@ -746,7 +790,6 @@
 
     document.getElementById('current-rate').value = rate;
 
-    // 預加載瀏覽器語音庫（避免行動端語音延遲或失效）
     function initSpeechEngine() {
       if ('speechSynthesis' in window) {
         availableVoices = window.speechSynthesis.getVoices();
@@ -757,25 +800,24 @@
     }
     initSpeechEngine();
 
-    // 分頁切換
-    function switchMagazineTab(tab) {
+    // 明確接收傳入按鈕元素，解決 Safari event 廢棄問題
+    function switchMagazineTab(tab, el) {
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      
+      if (el) el.classList.add('active');
+      
       if(tab === 'itinerary') {
-        event.target.classList.add('active');
         document.getElementById('itinerary-view').classList.add('active');
       } else if (tab === 'kakeibo') {
-        event.target.classList.add('active');
         document.getElementById('kakeibo-view').classList.add('active');
         drawRecords();
       } else if (tab === 'translate') {
-        event.target.classList.add('active');
         document.getElementById('translate-view').classList.add('active');
         renderPhrases();
       }
     }
 
-    // 切換天數
     function pickDay(d) {
       activeDay = d;
       document.querySelectorAll('.day-pill').forEach((p, idx) => {
@@ -784,7 +826,6 @@
       drawPlans();
     }
 
-    // 渲染行程卡片
     function drawPlans() {
       const container = document.getElementById('plan-container');
       const plans = itineraryPlans[activeDay] || [];
@@ -814,14 +855,12 @@
       drawPlans();
     }
 
-    // 匯率
     function adjustRate() {
       rate = parseFloat(document.getElementById('current-rate').value) || 0.215;
       localStorage.setItem('fk_rate', rate);
       drawRecords();
     }
 
-    // 儲存消費
     function saveRecord() {
       const name = document.getElementById('k-item').value.trim();
       const amount = parseFloat(document.getElementById('k-amount').value);
@@ -863,14 +902,13 @@
       drawRecords();
     }
 
-    // 渲染手帳記錄
     function drawRecords() {
       let totalTwd = 0;
       let totalJpy = 0;
       const box = document.getElementById('kakeibo-records-box');
 
       if (records.length === 0) {
-        box.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 0.8rem; font-family: 'Zen Old Mincho', serif;">尚無消費記錄 ． 請記錄下第一筆旅行回憶</div>`;
+        box.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 0.82rem; font-family: var(--font-serif);">尚無消費記錄 ． 請記錄下第一筆旅行回憶</div>`;
       } else {
         box.innerHTML = records.map(r => {
           totalTwd += r.twd;
@@ -897,7 +935,6 @@
       document.getElementById('sum-jpy').innerText = `¥ ${totalJpy.toLocaleString()}`;
     }
 
-    // ====== 翻譯模組 ======
     async function performTranslation() {
       const text = document.getElementById('trans-input').value.trim();
       if(!text) {
@@ -924,13 +961,11 @@
       }
     }
 
-    // ====== 核心修復：雙軌語音播放引擎（Web Speech + Audio Fallback） ======
     let currentAudio = null;
 
     function speakJapanese(text, btnElement = null) {
       if (!text) return;
 
-      // 按鈕播放回饋效果
       let origBtnText = "";
       if (btnElement) {
         origBtnText = btnElement.innerText;
@@ -941,17 +976,15 @@
         if (btnElement) btnElement.innerText = origBtnText;
       };
 
-      // 檢查 Web Speech API
       if ('speechSynthesis' in window) {
         try {
-          window.speechSynthesis.cancel(); // 停止先前的朗讀
-          window.speechSynthesis.resume(); // 解除行動端 iOS/Android 的暫停掛起狀態
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.resume();
 
           const utterance = new SpeechSynthesisUtterance(text);
           utterance.lang = 'ja-JP';
-          utterance.rate = 0.88; // 稍微放慢，發音更清晰自然
+          utterance.rate = 0.88;
 
-          // 優先挑選日文語音引擎
           if (!availableVoices.length) availableVoices = window.speechSynthesis.getVoices();
           const jaVoice = availableVoices.find(v => v.lang === 'ja-JP' || v.lang.includes('ja') || v.lang.includes('JP'));
           if (jaVoice) utterance.voice = jaVoice;
@@ -960,13 +993,11 @@
           utterance.onstart = () => { spoken = true; };
           utterance.onend = () => { resetBtn(); };
           utterance.onerror = () => {
-            // Web Speech 失敗時自動切換至備援音訊
             playFallbackAudio(text, resetBtn);
           };
 
           window.speechSynthesis.speak(utterance);
 
-          // 針對 iOS 偶發的靜默不觸發做 400ms 超時檢測
           setTimeout(() => {
             if (!spoken && (!window.speechSynthesis.speaking || window.speechSynthesis.paused)) {
               playFallbackAudio(text, resetBtn);
@@ -979,11 +1010,9 @@
         }
       }
 
-      // 若完全不支援 SpeechSynthesis，直接使用備用音訊
       playFallbackAudio(text, resetBtn);
     }
 
-    // 備援語音引擎：直接使用高音質真人 TTS 音訊
     function playFallbackAudio(text, onFinishCallback) {
       try {
         if (currentAudio) {
@@ -1014,10 +1043,10 @@
       openBigModal(currentTranslatedJa, currentInputZh);
     }
 
-    function pickPhraseCat(cat) {
+    function pickPhraseCat(cat, el) {
       activePhraseCat = cat;
       document.querySelectorAll('.phrase-cat-pill').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
+      if (el) el.classList.add('active');
       renderPhrases();
     }
 
@@ -1040,7 +1069,7 @@
       document.getElementById('modal-zh').innerText = zh;
       document.getElementById('bigModal').classList.add('active');
       const btn = document.getElementById('btn-modal-voice');
-      speakJapanese(ja, btn); // 點開大字卡時自動發音一次
+      speakJapanese(ja, btn);
     }
 
     function closeBigModal() {
@@ -1052,7 +1081,6 @@
       }
     }
 
-    // 初始渲染
     drawPlans();
     drawRecords();
     renderPhrases();
