@@ -388,7 +388,7 @@
     .btn-tool {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 4px;
       font-size: 0.75rem;
       color: var(--slate-blue);
@@ -396,8 +396,10 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      transition: all 0.2s;
     }
     .btn-tool:hover { background: var(--tag-bg); }
+    .btn-tool:active { transform: scale(0.96); }
 
     /* 常用救急手指卡 */
     .phrase-category-nav {
@@ -486,7 +488,9 @@
       font-size: 0.9rem;
       cursor: pointer;
       margin-bottom: 10px;
+      transition: all 0.2s;
     }
+    .btn-big-voice:active { transform: scale(0.96); }
     .btn-close-modal {
       background: none;
       border: 1px solid var(--border-soft);
@@ -611,7 +615,7 @@
       <div class="trans-result-card" id="trans-result-box" style="display: none;">
         <div class="trans-text" id="trans-ja-result"></div>
         <div class="trans-actions">
-          <button class="btn-tool" onclick="speakCurrentText()">🔊 發音</button>
+          <button class="btn-tool" id="btn-voice-input" onclick="speakCurrentText()">🔊 發音</button>
           <button class="btn-tool" onclick="showBigModalCurrent()">🔍 放大給店員看</button>
         </div>
       </div>
@@ -637,7 +641,7 @@
       <div class="big-ja" id="modal-ja">すみません</div>
       <div class="big-zh" id="modal-zh">不好意思</div>
       <div>
-        <button class="btn-big-voice" onclick="speakJapanese(document.getElementById('modal-ja').innerText)">🔊 播放日文語音</button>
+        <button class="btn-big-voice" id="btn-modal-voice" onclick="speakJapanese(document.getElementById('modal-ja').innerText, this)">🔊 播放日文語音</button>
       </div>
       <div>
         <button class="btn-close-modal" onclick="closeBigModal()">關閉 Close</button>
@@ -646,7 +650,7 @@
   </div>
 
   <script>
-    // 完整 5 天行程資料庫（含 Google Maps 導航按鈕）
+    // 完整 5 天行程資料庫
     const itineraryPlans = {
       1: [
         { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，提領行李。" },
@@ -703,7 +707,7 @@
       ]
     };
 
-    // 常用情境日語資料庫（離線可用手指卡）
+    // 常用情境日語資料庫
     const phraseDatabase = {
       dining: [
         { zh: "請給我中文菜單", ja: "中国語のメニューはありますか？" },
@@ -738,8 +742,20 @@
     let currentTranslatedJa = "";
     let currentInputZh = "";
     let activePhraseCat = 'dining';
+    let availableVoices = [];
 
     document.getElementById('current-rate').value = rate;
+
+    // 預加載瀏覽器語音庫（避免行動端語音延遲或失效）
+    function initSpeechEngine() {
+      if ('speechSynthesis' in window) {
+        availableVoices = window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          availableVoices = window.speechSynthesis.getVoices();
+        };
+      }
+    }
+    initSpeechEngine();
 
     // 分頁切換
     function switchMagazineTab(tab) {
@@ -908,20 +924,90 @@
       }
     }
 
-    function speakJapanese(text) {
-      if (!('speechSynthesis' in window)) {
-        alert('此裝置瀏覽器不支援語音合成發音');
-        return;
+    // ====== 核心修復：雙軌語音播放引擎（Web Speech + Audio Fallback） ======
+    let currentAudio = null;
+
+    function speakJapanese(text, btnElement = null) {
+      if (!text) return;
+
+      // 按鈕播放回饋效果
+      let origBtnText = "";
+      if (btnElement) {
+        origBtnText = btnElement.innerText;
+        btnElement.innerText = "🔊 播放中...";
       }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ja-JP';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+
+      const resetBtn = () => {
+        if (btnElement) btnElement.innerText = origBtnText;
+      };
+
+      // 檢查 Web Speech API
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel(); // 停止先前的朗讀
+          window.speechSynthesis.resume(); // 解除行動端 iOS/Android 的暫停掛起狀態
+
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.88; // 稍微放慢，發音更清晰自然
+
+          // 優先挑選日文語音引擎
+          if (!availableVoices.length) availableVoices = window.speechSynthesis.getVoices();
+          const jaVoice = availableVoices.find(v => v.lang === 'ja-JP' || v.lang.includes('ja') || v.lang.includes('JP'));
+          if (jaVoice) utterance.voice = jaVoice;
+
+          let spoken = false;
+          utterance.onstart = () => { spoken = true; };
+          utterance.onend = () => { resetBtn(); };
+          utterance.onerror = () => {
+            // Web Speech 失敗時自動切換至備援音訊
+            playFallbackAudio(text, resetBtn);
+          };
+
+          window.speechSynthesis.speak(utterance);
+
+          // 針對 iOS 偶發的靜默不觸發做 400ms 超時檢測
+          setTimeout(() => {
+            if (!spoken && (!window.speechSynthesis.speaking || window.speechSynthesis.paused)) {
+              playFallbackAudio(text, resetBtn);
+            }
+          }, 400);
+          return;
+        } catch (e) {
+          playFallbackAudio(text, resetBtn);
+          return;
+        }
+      }
+
+      // 若完全不支援 SpeechSynthesis，直接使用備用音訊
+      playFallbackAudio(text, resetBtn);
+    }
+
+    // 備援語音引擎：直接使用高音質真人 TTS 音訊
+    function playFallbackAudio(text, onFinishCallback) {
+      try {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
+        currentAudio = new Audio(audioUrl);
+        currentAudio.onended = () => { if (onFinishCallback) onFinishCallback(); };
+        currentAudio.onerror = () => {
+          if (onFinishCallback) onFinishCallback();
+          alert('請確認手機未開啟靜音模式或音量已開啟！');
+        };
+        currentAudio.play().catch(() => {
+          if (onFinishCallback) onFinishCallback();
+        });
+      } catch (err) {
+        if (onFinishCallback) onFinishCallback();
+      }
     }
 
     function speakCurrentText() {
-      if(currentTranslatedJa) speakJapanese(currentTranslatedJa);
+      const btn = document.getElementById('btn-voice-input');
+      if (currentTranslatedJa) speakJapanese(currentTranslatedJa, btn);
     }
 
     function showBigModalCurrent() {
@@ -953,12 +1039,17 @@
       document.getElementById('modal-ja').innerText = ja;
       document.getElementById('modal-zh').innerText = zh;
       document.getElementById('bigModal').classList.add('active');
-      speakJapanese(ja); // 點開大字時自動播放一次發音
+      const btn = document.getElementById('btn-modal-voice');
+      speakJapanese(ja, btn); // 點開大字卡時自動發音一次
     }
 
     function closeBigModal() {
       document.getElementById('bigModal').classList.remove('active');
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
     }
 
     // 初始渲染
