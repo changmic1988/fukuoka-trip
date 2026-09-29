@@ -20,7 +20,7 @@
       --tag-bg: #F3ECE2;          /* 標籤淡雅底色 */
       --accent-green: #6B7B6E;    /* 苔蘚綠 */
 
-      /* iOS 原生系統字型變數 */
+      /* iOS 原生系統字型 */
       --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans", "Heiti TC", sans-serif;
       --font-serif: "Songti TC", "Hiragino Mincho ProN", "YuMincho", Georgia, serif;
     }
@@ -34,7 +34,7 @@
 
     html, body {
       width: 100%;
-      overflow-x: hidden; /* 徹底杜絕手機橫向滑動溢出 */
+      overflow-x: hidden;
     }
 
     body {
@@ -296,7 +296,6 @@
       text-align: center;
     }
 
-    /* 記帳表單容器防跑版修正 */
     .kakeibo-form, .trans-box {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -315,7 +314,6 @@
       font-weight: 600;
     }
 
-    /* 表單格線系統重構（解決 iPhone 橫向擠爆） */
     .f-row { 
       display: flex; 
       gap: 10px; 
@@ -327,14 +325,13 @@
       display: flex; 
       flex-direction: column; 
       gap: 5px; 
-      min-width: 0; /* 關鍵：防止 flex 子元件被內部 input 撐破 */
+      min-width: 0;
     }
     .f-group label { 
       font-size: 0.72rem; 
       color: var(--text-muted); 
     }
 
-    /* iOS 最佳化 input / select（避免點擊自動放大） */
     input, select, textarea {
       width: 100%;
       box-sizing: border-box;
@@ -342,12 +339,17 @@
       border: 1px solid var(--border-soft);
       border-radius: 6px;
       background: #FAF8F5;
-      font-size: 16px; /* 關鍵：設為 16px 即可完全防止 iOS Safari 放大畫面跑版 */
+      font-size: 16px;
       color: var(--text-main);
       outline: none;
       font-family: var(--font-sans);
       appearance: none;
       -webkit-appearance: none;
+    }
+    /* iOS 原生日期欄位微調 */
+    input[type="date"] {
+      min-height: 42px;
+      line-height: normal;
     }
     select {
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A817C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
@@ -376,12 +378,41 @@
     }
     .btn-add:active { background: var(--autumn-terracotta); }
 
-    /* 支出手帳清單 */
+    /* 手帳式日期分組樣式 */
     .kakeibo-records {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
     }
+    .date-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .date-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 4px 6px 2px;
+      border-bottom: 1px dashed var(--border-soft);
+    }
+    .date-title {
+      font-family: var(--font-serif);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--slate-blue);
+      letter-spacing: 0.04em;
+    }
+    .date-subtotal {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-serif);
+    }
+    .date-subtotal strong {
+      color: var(--autumn-terracotta);
+      font-weight: 600;
+    }
+
     .record-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -390,6 +421,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 1px 4px rgba(52, 46, 43, 0.02);
     }
     .rec-main { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
     .rec-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
@@ -592,17 +624,17 @@
       <input type="number" id="current-rate" step="0.001" value="0.215" onchange="adjustRate()">
     </div>
 
-    <!-- 登記卡片（重構為適合手機寬度的 2 欄佈局） -->
+    <!-- 登記卡片（支援自由指定日期） -->
     <div class="kakeibo-form">
       <div class="form-title">／ 記錄新消費 ． Entry ／</div>
       
-      <!-- 第一排：項目與幣別 -->
+      <!-- 第一排：日期與幣別 -->
       <div class="f-row">
-        <div class="f-group" style="flex: 2;">
-          <label>支出名目</label>
-          <input type="text" id="k-item" placeholder="如：とめ手羽 雞翅">
+        <div class="f-group" style="flex: 1.6;">
+          <label>消費日期</label>
+          <input type="date" id="k-date">
         </div>
-        <div class="f-group" style="flex: 1.2;">
+        <div class="f-group" style="flex: 1;">
           <label>幣別</label>
           <select id="k-curr">
             <option value="JPY">日圓 (¥)</option>
@@ -611,7 +643,15 @@
         </div>
       </div>
 
-      <!-- 第二排：金額 -->
+      <!-- 第二排：支出名目 -->
+      <div class="f-row">
+        <div class="f-group">
+          <label>支出名目</label>
+          <input type="text" id="k-item" placeholder="如：とめ手羽 雞翅、eSIM網卡">
+        </div>
+      </div>
+
+      <!-- 第三排：金額 -->
       <div class="f-row">
         <div class="f-group">
           <label>金額</label>
@@ -619,7 +659,7 @@
         </div>
       </div>
 
-      <!-- 第三排：分類與付款方式並排 -->
+      <!-- 第四排：分類與付款方式 -->
       <div class="f-row">
         <div class="f-group">
           <label>分類</label>
@@ -629,6 +669,7 @@
             <option value="生活雜貨">生活雜貨</option>
             <option value="景點體驗">景點體驗</option>
             <option value="住宿費用">住宿費用</option>
+            <option value="行前準備">行前準備</option>
             <option value="其他花費">其他花費</option>
           </select>
         </div>
@@ -645,7 +686,7 @@
       <button class="btn-add" onclick="saveRecord()">記帳 ． RECORD</button>
     </div>
 
-    <!-- 記錄明細 -->
+    <!-- 記錄明細（依日期手帳式分組） -->
     <div class="kakeibo-records" id="kakeibo-records-box">
       <!-- 動態載入記錄 -->
     </div>
@@ -790,6 +831,16 @@
 
     document.getElementById('current-rate').value = rate;
 
+    // 設定日期輸入框預設值為今天 (YYYY-MM-DD)
+    function resetDateToToday() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      document.getElementById('k-date').value = `${yyyy}-${mm}-${dd}`;
+    }
+    resetDateToToday();
+
     function initSpeechEngine() {
       if ('speechSynthesis' in window) {
         availableVoices = window.speechSynthesis.getVoices();
@@ -800,7 +851,6 @@
     }
     initSpeechEngine();
 
-    // 明確接收傳入按鈕元素，解決 Safari event 廢棄問題
     function switchMagazineTab(tab, el) {
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
@@ -861,7 +911,9 @@
       drawRecords();
     }
 
+    // 儲存消費記錄（支援自選日期與自動排序）
     function saveRecord() {
+      const dateVal = document.getElementById('k-date').value;
       const name = document.getElementById('k-item').value.trim();
       const amount = parseFloat(document.getElementById('k-amount').value);
       const curr = document.getElementById('k-curr').value;
@@ -882,13 +934,31 @@
         jpy = Math.round(amount / rate);
       }
 
+      // 格式化顯示用字串（如 10/16）
+      let displayDate = dateVal;
+      if (dateVal) {
+        const parts = dateVal.split('-');
+        if (parts.length === 3) {
+          displayDate = `${parts[1]}/${parts[2]}`;
+        }
+      }
+
       const entry = {
         id: Date.now(),
-        name, twd, jpy, type, pay,
-        date: new Date().toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' })
+        rawDate: dateVal || new Date().toISOString().split('T')[0], // 供排序與分組
+        displayDate: displayDate,
+        name, twd, jpy, type, pay
       };
 
-      records.unshift(entry);
+      records.push(entry);
+      // 依日期（倒序，由新到舊）排序，若日期相同則依建立時間倒序
+      records.sort((a, b) => {
+        const da = a.rawDate || '';
+        const db = b.rawDate || '';
+        if (db !== da) return db.localeCompare(da);
+        return b.id - a.id;
+      });
+
       localStorage.setItem('fk_records', JSON.stringify(records));
 
       document.getElementById('k-item').value = '';
@@ -902,6 +972,7 @@
       drawRecords();
     }
 
+    // 繪製手帳式「按日分組」清單與總額統計
     function drawRecords() {
       let totalTwd = 0;
       let totalJpy = 0;
@@ -910,25 +981,62 @@
       if (records.length === 0) {
         box.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 30px 0; font-size: 0.82rem; font-family: var(--font-serif);">尚無消費記錄 ． 請記錄下第一筆旅行回憶</div>`;
       } else {
-        box.innerHTML = records.map(r => {
+        // 先計算總支出
+        records.forEach(r => {
           totalTwd += r.twd;
           totalJpy += r.jpy;
-          return `
-            <div class="record-card">
-              <div>
-                <div class="rec-main">${r.name}</div>
-                <div class="rec-meta">${r.date} ． ${r.type} ． ${r.pay}</div>
+        });
+
+        // 依 rawDate 分組
+        const grouped = {};
+        records.forEach(r => {
+          const key = r.rawDate || '其他日期';
+          if (!grouped[key]) grouped[key] = [];
+          grouped[key].push(r);
+        });
+
+        // 組裝手帳式 HTML
+        let html = '';
+        for (const [dateKey, items] of Object.entries(grouped)) {
+          let dayTwd = 0;
+          let dayJpy = 0;
+          items.forEach(it => {
+            dayTwd += it.twd;
+            dayJpy += it.jpy;
+          });
+
+          // 美化日期標題（如 2026-10-16 轉為 10月16日）
+          let groupTitle = dateKey;
+          if (dateKey.includes('-')) {
+            const parts = dateKey.split('-');
+            groupTitle = `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日`;
+          }
+
+          html += `
+            <div class="date-group">
+              <div class="date-group-header">
+                <span class="date-title">🗓️ ${groupTitle}</span>
+                <span class="date-subtotal">當日小計 <strong>NT$ ${dayTwd.toLocaleString()}</strong> <small>(¥ ${dayJpy.toLocaleString()})</small></span>
               </div>
-              <div class="rec-right">
-                <div>
-                  <div class="rec-twd">NT$ ${r.twd.toLocaleString()}</div>
-                  <div class="rec-jpy">¥ ${r.jpy.toLocaleString()}</div>
+              ${items.map(r => `
+                <div class="record-card">
+                  <div>
+                    <div class="rec-main">${r.name}</div>
+                    <div class="rec-meta">${r.type} ．${r.pay}</div>
+                  </div>
+                  <div class="rec-right">
+                    <div>
+                      <div class="rec-twd">NT$ ${r.twd.toLocaleString()}</div>
+                      <div class="rec-jpy">¥ ${r.jpy.toLocaleString()}</div>
+                    </div>
+                    <button class="btn-del" onclick="removeRecord(${r.id})">✕</button>
+                  </div>
                 </div>
-                <button class="btn-del" onclick="removeRecord(${r.id})">✕</button>
-              </div>
+              `).join('')}
             </div>
           `;
-        }).join('');
+        }
+        box.innerHTML = html;
       }
 
       document.getElementById('sum-twd').innerText = `NT$ ${totalTwd.toLocaleString()}`;
