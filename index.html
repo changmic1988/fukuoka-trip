@@ -26,10 +26,11 @@
       --tag-bg: #F3ECE2;          /* 標籤淡雅底色 */
       --accent-green: #6B7B6E;    /* 苔蘚綠 */
 
-      /* 交通線路官方識別色 */
+      /* 軌道交通官方識別色 */
       --metro-kuko: #F57C00;      /* 空港線 橙色 */
       --metro-nanakuma: #2E7D32;  /* 七隈線 綠色 */
       --metro-nishitetsu: #6A1B9A;/* 西鐵線 紫色 */
+      --rail-jr: #C62828;         /* JR 鹿兒島本線 赤紅 */
 
       /* iOS 原生系統字型變數 */
       --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans", "Heiti TC", sans-serif;
@@ -439,7 +440,7 @@
       line-height: 1.45;
     }
 
-    /* 交通站點徽章 */
+    /* 軌道交通徽章 */
     .transit-badge {
       display: inline-flex;
       align-items: center;
@@ -455,6 +456,7 @@
     .transit-badge.kuko { border-left: 3.5px solid var(--metro-kuko); color: #B25900; }
     .transit-badge.nanakuma { border-left: 3.5px solid var(--metro-nanakuma); color: #1B5E20; }
     .transit-badge.nishitetsu { border-left: 3.5px solid var(--metro-nishitetsu); color: #4A148C; }
+    .transit-badge.jr { border-left: 3.5px solid var(--rail-jr); color: #B71C1C; }
 
     .plan-note {
       font-size: 0.82rem;
@@ -863,6 +865,17 @@
       cursor: pointer;
     }
 
+    /* 全螢幕圖片放大檢視 Modal */
+    #imgModalSrc {
+      width: 100%;
+      height: auto;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+      background: #FFF;
+    }
+
     /* PDF 產生暫存區 */
     #pdf-render-area {
       display: none;
@@ -937,7 +950,6 @@
         <span id="transit-arrow">▼ 點擊展開</span>
       </button>
       <div class="transit-accordion-content" id="transit-content">
-        <!-- 採用官方高解析圖源，配置 referrerpolicy 杜絕防盜連 403 破圖 -->
         <img src="https://subway.city.fukuoka.lg.jp/cha_trad/route/img/map.jpg" 
              referrerpolicy="no-referrer"
              loading="lazy"
@@ -1138,7 +1150,7 @@
   <!-- 全螢幕圖片放大檢視 Modal（地鐵圖用） -->
   <div class="base-modal" id="imgModal" onclick="closeImageModal()">
     <div style="max-width: 95%; max-height: 90vh; text-align: center;" onclick="event.stopPropagation()">
-      <img id="imgModalSrc" src="" referrerpolicy="no-referrer" style="width: 100%; height: auto; max-height: 80vh; object-fit: contain; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.5); background: #FFF;">
+      <img id="imgModalSrc" src="" referrerpolicy="no-referrer" alt="全線路線大圖">
       <button class="btn-close-modal" style="margin-top: 12px; background: rgba(255,255,255,0.95);" onclick="closeImageModal()">關閉地圖</button>
     </div>
   </div>
@@ -1147,60 +1159,61 @@
   <div id="pdf-render-area"></div>
 
   <script>
-    // 預設 5 天官方行程資料庫（內建交通車站代號與出口指引）
+    // ====== 【零公車・全軌道＋散步純淨版】官方行程完整資料庫 ======
     const defaultItinerary = {
       1: [
-        { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", transit: "✈️ 桃園二航 ➔ 福岡國際線", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，提領行李。" },
-        { time: "11:20 – 12:30", title: "通關入境 ➔ 接駁車至國內線轉地鐵", transit: "🟠 空港線 [K13 福岡空港駅] ➔ [K11 博多駅]", mapQuery: "博多駅", note: "搭乘地下鐵空港線直達博多站（約 5 分鐘）。" },
-        { time: "12:30 – 13:15", title: "飯店寄放行李 ＆ 隨身整備", transit: "📍 博多站筑紫口/博多口周邊", mapQuery: "博多駅", note: "博多車站周邊飯店寄存行李，換上輕便隨身包。" },
-        { time: "13:15 – 14:30", title: "【午餐時段】博多車站地下街用餐", transit: "地下街直通 DEITOS / 一番街", mapQuery: "博多一番街", note: "一番街或 DEITOS 暖胃拉麵或烤魚定食。" },
-        { time: "14:30 – 15:30", title: "參拜博多總鎮守「櫛田神社」", transit: "🟢 七隈線 [N07 櫛田神社前駅]（1號出口 步行1分）", mapQuery: "櫛田神社 福岡", note: "白天參拜、近距離欣賞巨型常設飾山笠與夫婦銀杏樹。" },
-        { time: "15:30 – 16:45", title: "漫步「川端通商店街」", transit: "出神社北口即達 ． 挑高拱廊", mapQuery: "川端通商店街", note: "出神社北口即是，挑高拱廊遮蔭，逛老舖雜貨與紅豆麻糬湯。" },
-        { time: "16:45 – 17:00", title: "中洲川端站搭地鐵直達回博多站", transit: "🟠 空港線 [K09 中洲川端駅] ➔ [K11 博多駅]", mapQuery: "中洲川端駅", note: "僅 2 站 3 分鐘回到博多，動線零折返。" },
-        { time: "17:00 – 18:30", title: "【飯店 Check-in 徹底休息】", transit: "返回博多飯店", mapQuery: "博多駅", note: "進房放行囊、洗臉小憩充電，消解早班機勞頓。" },
-        { time: "18:30 – 20:00", title: "【晚餐時段】博多車站周邊美食", transit: "步行 3 分鐘", mapQuery: "とめ手羽 博多駅前店", note: "推薦前往「とめ手羽」品嚐金賞酥脆炸雞翅居酒屋。" },
-        { time: "20:00 – 20:40", title: "【高空夜景】JR 博多城頂樓「燕之杜廣場」", transit: "JR博多城 屋頂展望台", mapQuery: "JR博多シティ つばめの杜ひろば", note: "搭乘透明電梯直達屋頂層，俯瞰大通車流光軌、遠眺飛機航道。" },
-        { time: "20:40 – 21:20", title: "【綠洲散策】明治公園立體迴廊（藤本壯介監修）", transit: "博多站前 步行 3 分鐘", mapQuery: "明治公園 福岡市博多区", note: "下樓漫步 3 分鐘即達，登上空之庭平台吹秋風，外帶 POSS COFFEE 熱飲。" },
-        { time: "21:20 之後", title: "漫步返回飯店休息", transit: "步行回飯店", mapQuery: "博多駅", note: "步行 3 分鐘回飯店，泡澡放鬆就寢。" }
+        { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", transit: "✈️ 桃園 TPE ➔ 福岡 FUK", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，通關入境、提領大件行李。" },
+        { time: "11:20 – 12:30", title: "入境 ➔ 機場接駁車 ➔ 地鐵直達博多站", transit: "🟠 空港線 [K13 福岡空港駅] ➔ [K11 博多駅]", mapQuery: "博多駅", note: "搭機場免費航廈接駁車至國內線，轉乘地下鐵空港線（僅 2 站約 5 分鐘）直達博多站。" },
+        { time: "12:30 – 13:15", title: "【飯店寄放行李】博多站前微笑飯店", transit: "博多口步行約 4 分鐘", mapQuery: "Smile Hotel Hakata Ekimae", note: "由博多口出站步行約 4 分鐘抵達「博多站前微笑飯店」寄放行李，輕裝出發。" },
+        { time: "13:15 – 14:30", title: "【午餐時段】博多車站地下街用餐", transit: "車站直通 DEITOS / 一番街", mapQuery: "博多一番街", note: "散步回博多車站地下街（博多一番街／DEITOS）自由挑選拉麵或定食暖胃。" },
+        { time: "14:30 – 15:30", title: "參拜博多總鎮守「櫛田神社」", transit: "博多站散步約 10 分鐘直達", mapQuery: "櫛田神社 福岡", note: "白天參拜、近距離欣賞巨型常設飾山笠與千年夫婦銀杏樹。" },
+        { time: "15:30 – 16:45", title: "漫步「川端通商店街」", transit: "出神社北口即直通拱廊", mapQuery: "川端通商店街", note: "出神社北口直通川端通商店街，挑高拱廊遮蔭，逛老舖雜貨與紅豆麻糬湯。" },
+        { time: "16:45 – 17:00", title: "中洲川端站搭地鐵空港線直達博多站", transit: "🟠 空港線 [K09 中洲川端駅] ➔ [K11 博多駅]", mapQuery: "中洲川端駅", note: "商店街北端「中洲川端站」搭地鐵空港線（僅 2 站約 3 分鐘）直達返回博多站。" },
+        { time: "17:00 – 18:30", title: "【飯店 Check-in 徹底休息】", transit: "步行 4 分鐘回微笑飯店", mapQuery: "Smile Hotel Hakata Ekimae", note: "步行 4 分鐘回博多站前微笑飯店進房放鬆洗臉、補眠小憩充電。" },
+        { time: "18:30 – 20:00", title: "【晚餐時段】とめ手羽 金賞酥脆炸雞翅", transit: "同街區步行 3 分鐘", mapQuery: "とめ手羽 博多駅前店", note: "同街區步行 3 分鐘居酒屋，品嚐榮獲多次日本金賞的招牌酥脆炸雞翅。" },
+        { time: "20:00 – 20:40", title: "【高空夜景】JR 博多城頂樓「燕之杜廣場」", transit: "搭透明電梯直達 RF 屋頂層", mapQuery: "JR博多シティ つばめの杜ひろば", note: "俯瞰博多大通車流光軌、遠眺客機降落航道與開闊夜景。" },
+        { time: "20:40 – 21:20", title: "【綠洲散策】明治公園立體迴廊步道", transit: "下樓漫步 3 分鐘即達", mapQuery: "明治公園 福岡市博多区", note: "漫步立體空中步道、在 POSS COFFEE 外帶杯熱飲坐在階梯吹晚風。" },
+        { time: "21:20 之後", title: "散步走回微笑飯店，泡澡就寢", transit: "散步僅 1～2 分鐘（約 150m）", mapQuery: "Smile Hotel Hakata Ekimae", note: "從明治公園步行約 150 公尺輕鬆回飯店，泡澡放鬆就寢。" }
       ],
       2: [
-        { time: "09:00 – 11:30", title: "百道濱沙灘 ＆ 福岡塔", transit: "🟠 空港線 [K04 西新駅]（1號出口 轉海螺小姐通）", mapQuery: "福岡タワー", note: "西新站漫步林蔭道（約20分）或租借 Charichari 電輔車漫遊。" },
-        { time: "11:30 – 11:45", title: "移動至「大濠公園站」", transit: "🟠 空港線 [K06 大濠公園駅] 直達", mapQuery: "大濠公園駅", note: "福岡塔下搭巴士或西新站搭地鐵直達。" },
-        { time: "11:45 – 13:00", title: "【午餐時段】大濠公園水岸周邊", transit: "湖畔周邊景觀餐廳", mapQuery: "大濠公園 レストラン", note: "湖畔景觀咖啡或周邊特色餐廳享用午餐。" },
-        { time: "13:00 – 14:15", title: "大濠公園湖畔 ＆ 舞鶴公園福岡城跡石垣", transit: "大濠公園 ➔ 舞鶴公園天守台", mapQuery: "福岡城 潮見櫓 天守台跡", note: "湖畔散策、登上城跡天守台眺望福岡市區開闊天際線。" },
-        { time: "14:15 – 17:00", title: "「藥院」質感生活街區散策", transit: "🟢 七隈線 [N05 藥院駅] / [N04 藥院大通駅]", mapQuery: "薬院 カフェ", note: "逛訪巷弄生活雜貨、品嚐法式舒芙蕾等手作下午茶。" },
-        { time: "17:00 – 18:30", title: "天神大名潮流街區 ＆ 警固神社足湯", transit: "天神站步行 5 分鐘", mapQuery: "警固神社 足湯", note: "大名潮流店鋪漫步，於警固神社享受免費溫泉足湯放鬆雙腳。" },
-        { time: "18:30 – 20:00", title: "【晚餐時段】天神／今泉商圈周邊", transit: "天神商圈居酒屋", mapQuery: "天神 もつ鍋", note: "享用在地博多牛腸鍋或特色居酒屋。" },
-        { time: "20:00 之後", title: "天神站搭地鐵回博多飯店", transit: "🟠 空港線 [K08 天神駅] ➔ [K11 博多駅]", mapQuery: "天神駅", note: "地鐵 3 站即達博多，輕鬆休息。" }
+        { time: "09:00 – 09:20", title: "博多站搭地鐵空港線直達「西新站」", transit: "🟠 空港線 [K11 博多駅] ➔ [K04 西新駅]", mapQuery: "西新駅", note: "飯店步行 4 分鐘至博多站，搭乘空港線直達西新站（約 9 分鐘，1 號出口出站）。" },
+        { time: "09:20 – 11:30", title: "海螺小姐通 ➔ 百道濱沙灘 ＆ 福岡塔海灣", transit: "西新站 1號出口 沿林蔭散步 1.4km", mapQuery: "福岡タワー", note: "沿平坦開闊的海螺小姐通散步約 20 分鐘至海邊，漫步百道濱沙灘，登福岡塔展望台俯瞰海灣。" },
+        { time: "11:30 – 12:00", title: "西新站搭地鐵空港線直達「大濠公園站」", transit: "🟠 空港線 [K04 西新駅] ➔ [K06 大濠公園駅]", mapQuery: "大濠公園駅", note: "由福岡塔散步回西新站，搭乘地下鐵空港線直達大濠公園站（僅 2 站約 3 分鐘）。" },
+        { time: "12:00 – 13:15", title: "【午餐時段】大濠公園水岸景觀餐廳", transit: "大濠公園 湖畔周邊", mapQuery: "大濠公園 レストラン", note: "大濠公園水岸景觀餐廳周邊自由用餐，享受湖畔愜意風光。" },
+        { time: "13:15 – 14:15", title: "大濠公園湖畔 ＆ 舞鶴公園福岡城天守台", transit: "大濠公園 ➔ 舞鶴公園天守台跡", mapQuery: "福岡城 潮見櫓 天守台跡", note: "湖畔悠閒散步，順走至舞鶴公園登上福岡城天守台跡，遠眺市區開闊天際線。" },
+        { time: "14:15 – 17:00", title: "地鐵至天神／赤坂 ➔ 「藥院」生活街區散策", transit: "🟠 空港線 [K06 大濠公園] ➔ [K07 赤坂/K08 天神]", mapQuery: "薬院 カフェ", note: "搭地鐵 1 站後散步前往藥院生活街區，逛選物生活雜貨、品嚐法式舒芙蕾手作下午茶。" },
+        { time: "17:00 – 18:30", title: "天神大名潮流街區 ＆ 警固神社足湯", transit: "天神站步行 5 分鐘", mapQuery: "警固神社 足湯", note: "漫步大名潮流店鋪，走進警固神社享受免費天然溫泉足湯，舒緩今日雙腳疲憊。" },
+        { time: "18:30 – 20:00", title: "【晚餐時段】天神／今泉商圈在地料理", transit: "天神今泉商圈居酒屋", mapQuery: "天神 もつ鍋", note: "商圈周邊享用在地名物料理（如博多牛腸鍋或特色炙烤居酒屋）。" },
+        { time: "20:00 之後", title: "天神站搭地鐵直達博多站，回飯店休息", transit: "🟠 空港線 [K08 天神駅] ➔ [K11 博多駅]", mapQuery: "Smile Hotel Hakata Ekimae", note: "天神站搭地鐵空港線（3 站直達）回博多站，散步 4 分鐘回微笑飯店休息。" }
       ],
       3: [
-        { time: "08:15 – 09:37", title: "博多 ➔ 西鐵天神搭特急直達「西鐵柳川站」", transit: "🟣 西鐵天神大牟田線特急 [T01 福岡] ➔ [T39 柳川]", mapQuery: "西鉄柳川駅", note: "清晨直奔最南端，完美避開觀光團潮。" },
-        { time: "09:45 – 11:00", title: "柳川水鄉遊船（川下り）", transit: "柳川乘船場 接駁車直達", mapQuery: "柳川川下り乗船場", note: "清晨在柳樹石橋下泛舟漫遊約 60 分鐘。" },
-        { time: "11:15 – 12:45", title: "【午餐時段】柳川沖端老街蒸籠鰻魚飯", transit: "沖端老街 鰻魚名店", mapQuery: "柳川 うなぎ せいろ蒸し", note: "品嚐炭火現烤熱騰騰的招牌蒸籠鰻魚飯。" },
-        { time: "13:00 – 14:15", title: "西鐵北上至二日市轉乘至「太宰府站」", transit: "🟣 西鐵大牟田線 ➔ [T13 二日市] 轉 [D02 太宰府]", mapQuery: "太宰府駅", note: "西鐵同站轉乘太宰府線，轉銜流暢無阻。" },
-        { time: "14:15 – 16:30", title: "參拜太宰府天滿宮 ＆ 表參道散策", transit: "太宰府站出站即是表參道", mapQuery: "太宰府天満宮", note: "欣賞漂浮森林假殿、隈研吾星巴克、吃現烤熱梅枝餅。" },
-        { time: "16:30 – 17:30", title: "西鐵藥院站轉乘七隈線至天神南站", transit: "🟣 西鐵 [T02 藥院] 轉 🟢 七隈線 [N05 藥院] ➔ [N06 天神南]", mapQuery: "天神南駅", note: "同站換線，避開天神大站人潮。" },
-        { time: "17:30 – 18:30", title: "天神中央公園 ＆ 舊公會堂貴賓館夜燈", transit: "天神南站步行 3 分鐘", mapQuery: "旧福岡県公会堂貴賓館", note: "明治法式木造貴賓館與水岸微風漫步。" },
-        { time: "18:30 – 20:00", title: "【晚餐時段】天神南／春吉／中洲屋台", transit: "中洲春吉水岸", mapQuery: "中洲屋台街", note: "體驗道地路邊屋台文化或水岸景觀美食。" },
-        { time: "20:00 之後", title: "天神南站搭七隈線回博多站", transit: "🟢 七隈線 [N06 天神南] ➔ [N08 博多駅]", mapQuery: "博多駅", note: "僅 2 站直達博多站飯店。" }
+        { time: "08:15 – 09:37", title: "博多 ➔ 西鐵天神搭特急直達「西鐵柳川站」", transit: "🟣 西鐵天神大牟田線特急 [T01 福岡] ➔ [T39 柳川]", mapQuery: "西鉄柳川駅", note: "博多搭地鐵至天神，步行至西鐵福岡站搭特急直達西鐵柳川站（清晨直奔最南端，避開團客潮）。" },
+        { time: "09:45 – 11:00", title: "柳川水鄉遊船（川下り）", transit: "柳川乘船場 接駁車直達", mapQuery: "柳川川下り乗船場", note: "清晨在柳樹石橋下悠然泛舟漫遊約 60 分鐘，感受水鄉詩意。" },
+        { time: "11:15 – 12:45", title: "【午餐時段】柳川沖端老街蒸籠鰻魚飯", transit: "沖端老街 鰻魚百年名店", mapQuery: "柳川 うなぎ せいろ蒸し", note: "沖端老街自由享用炭火現烤熱騰騰的招牌蒸籠鰻魚飯（せいろ蒸し）。" },
+        { time: "13:00 – 14:15", title: "西鐵電車至二日市轉乘至「太宰府站」", transit: "🟣 西鐵大牟田線 ➔ [T13 二日市] 轉 [D02 太宰府]", mapQuery: "太宰府駅", note: "搭西鐵電車北上至西鐵二日市站，同站轉乘太宰府線直達太宰府站。" },
+        { time: "14:15 – 16:30", title: "參拜「太宰府天滿宮」＆ 表參道散策", transit: "太宰府站出站即是表參道", mapQuery: "太宰府天満宮", note: "欣賞漂浮森林假殿、隈研吾星巴克概念店、品嚐現烤酥熱梅枝餅。" },
+        { time: "16:30 – 17:30", title: "西鐵藥院站轉乘七隈線直通天神南站", transit: "🟣 西鐵 [T02 藥院] 轉 🟢 七隈線 [N05 藥院] ➔ [N06 天神南]", mapQuery: "天神南駅", note: "搭西鐵北返，於西鐵藥院站同站換乘七隈線直通天神南站（避開天神大站人潮）。" },
+        { time: "17:30 – 18:30", title: "天神中央公園 ＆ 舊公會堂貴賓館夜燈", transit: "天神南站步行 3 分鐘", mapQuery: "旧福岡県公会堂貴賓館", note: "漫步天神中央公園，欣賞明治法式木造舊公會堂貴賓館復古夜燈與水岸夜色。" },
+        { time: "18:30 – 20:00", title: "【晚餐時段】天神南／春吉水岸／中洲屋台", transit: "中洲春吉水岸小吃", mapQuery: "中洲屋台街", note: "天神南／春吉水岸享用特色晚餐，或造訪中洲屋台體驗在地熱鬧小吃。" },
+        { time: "20:00 之後", title: "天神南站搭七隈線回博多站，回飯店休息", transit: "🟢 七隈線 [N06 天神南] ➔ [N08 博多駅]", mapQuery: "Smile Hotel Hakata Ekimae", note: "天神南站搭地下鐵七隈線（僅 2 站直達）返回博多站，散步 4 分鐘回微笑飯店休息。" }
       ],
       4: [
-        { time: "09:30 – 12:30", title: "LaLaPort 福岡 朝聖實體大 ν 鋼彈", transit: "博多站巴總 4號月台搭直達巴", mapQuery: "三井ショッピングパーク ららぽーと福岡", note: "博多搭巴士直達，朝聖巨大鋼彈聲光演出與商場逛街。" },
-        { time: "12:30 – 14:00", title: "返回天神商圈 ＆【午餐時段】", transit: "天神商圈", mapQuery: "天神 ランチ", note: "天神周邊自由享用天婦羅或炸牛排。" },
-        { time: "14:00 – 17:00", title: "天神商圈集中採買（地下街 / Mina）", transit: "🟠 空港線 [K08 天神駅] 直通地下街", mapQuery: "天神地下街", note: "天神地下街、Mina天神、大名服飾，週一人少退稅極快。" },
-        { time: "17:00 – 18:30", title: "搭七隈線至博多運河城賞水舞", transit: "🟢 七隈線 [N07 櫛田神社前駅]（1號出口通運河城）", mapQuery: "キャナルシティ博多", note: "欣賞整點音樂水舞秀、逛大型 Alpen 戶外用品店。" },
-        { time: "18:30 – 19:30", title: "漫步回博多車站 ＆ 阪急 B1 伴手禮補齊", transit: "博多站地下直達", mapQuery: "博多阪急", note: "一次買足福岡各大盒裝排隊名產。" },
-        { time: "19:30 – 21:00", title: "【晚餐時段】博多車站周邊豐盛晚餐", transit: "JR 博多城美食街", mapQuery: "博多駅 レストラン", note: "旅程最後一晚大餐自由挑選。" },
-        { time: "21:00 之後", title: "回飯店整理行李箱", transit: "博多飯店", mapQuery: "博多駅", note: "分類打包托運品、秤重準備回國。" }
+        { time: "09:30 – 12:30", title: "【JR 軌道直達】LaLaPort 福岡 朝聖 ν 鋼彈", transit: "🚆 JR 鹿兒島本線 [博多] ➔ [竹下]（僅1站4分）", mapQuery: "三井ショッピングパーク ららぽーと福岡", note: "博多站搭 JR 鹿兒島本線普通車僅 1 站直達「竹下站」，沿人行道散步約 9 分鐘即達，朝聖巨大鋼彈聲光演出與商場逛街。" },
+        { time: "12:30 – 14:00", title: "JR 回博多轉地鐵空港線至天神 ➔【午餐時段】", transit: "🚆 竹下 ➔ 博多 轉 🟠 空港線 [K11 博多] ➔ [K08 天神]", mapQuery: "天神 ランチ", note: "散步回竹下站搭 JR 回博多（1 站），轉搭空港線至天神站，於天神商圈自由享用美味午餐。" },
+        { time: "14:00 – 17:00", title: "天神商圈平日集中採買（地下街 / Mina / 選物）", transit: "天神地下街直通各百貨", mapQuery: "天神地下街", note: "天神地下街、Mina天神、大名選物店，週一人少退稅極快，集中一次購齊。" },
+        { time: "17:00 – 18:30", title: "地鐵七隈線至櫛田神社前站 ➔ 博多運河城水舞", transit: "🟢 七隈線 [N06 天神南] ➔ [N07 櫛田神社前]（地下通道直通）", mapQuery: "キャナルシティ博多", note: "天神南搭七隈線僅 1 站至「櫛田神社前站」，由地下通道直通運河城，看整點水舞秀與 Alpen 戶外旗艦店。" },
+        { time: "18:30 – 19:30", title: "步行回博多站 ＆ 阪急 B1 伴手禮補齊", transit: "運河城步行約 10 分鐘至博多車站", mapQuery: "博多阪急", note: "由運河城步行約 10 分鐘回博多車站，在博多阪急 B1 伴手禮街一次補足各大盒裝排隊名產。" },
+        { time: "19:30 – 21:00", title: "【晚餐時段】博多車站周邊豐盛大餐", transit: "JR 博多城頂級美食街", mapQuery: "博多駅 レストラン", note: "旅程最後一晚在車站周邊自由挑選豐盛大餐，舉杯慶祝美好的福岡散策。" },
+        { time: "21:00 之後", title: "回微笑飯店整理行李箱、秤重打包", transit: "散步 4 分鐘回飯店", mapQuery: "Smile Hotel Hakata Ekimae", note: "散步 4 分鐘回博多站前微笑飯店，分類打包托運品、秤重準備明日歸途。" }
       ],
       5: [
-        { time: "08:00 – 08:30", title: "飯店退房，攜帶行李至博多車站", transit: "博多車站地下街", mapQuery: "博多駅", note: "行李直接推至車站地下街。" },
-        { time: "08:30 – 09:30", title: "【早午餐與咖啡時段】博多車站悠閒朝食", transit: "站內早餐名店", mapQuery: "博多駅 モーニング カフェ", note: "站內自由挑選心儀早餐，慢慢喝杯手沖咖啡醒腦。" },
-        { time: "09:30 – 09:40", title: "博多站搭地鐵空港線至國內線航廈", transit: "🟠 空港線 [K11 博多駅] ➔ [K13 福岡空港駅]", mapQuery: "福岡空港 国内線ターミナル", note: "僅 2 站約 5 分鐘，出站即是國內線航廈 B2。" },
-        { time: "09:40 – 10:20", title: "【國內線航廈漫步】展望台看飛機 ＆ 特產街", transit: "國內線頂樓展望台", mapQuery: "福岡空港 展望デッキ", note: "頂樓露天展望台近距離看客機起降、逛開闊特產街。" },
-        { time: "10:20 – 10:35", title: "國內線搭乘免費接駁車前往國際線", transit: "機場免費循環巴士", mapQuery: "福岡空港 国際線ターミナル", note: "班次密集，車程約 10～15 分鐘輕鬆抵達。" },
-        { time: "10:35 – 12:20", title: "長榮櫃檯報到 ➔ 出境安檢 ➔ 免稅店採買", transit: "國際線出境大廳", mapQuery: "Fukuoka Airport International Terminal", note: "悠閒託運行李出境，免稅店補齊伴手禮。" },
-        { time: "12:20 – 13:45", title: "搭乘長榮航空 BR 105 起飛返台", transit: "✈️ 福岡國際線 ➔ 桃園二航", mapQuery: "桃園國際機場 第二航廈", note: "平安順利降落台北桃園機場！" }
+        { time: "08:00 – 08:30", title: "微笑飯店辦理退房，攜帶行李至博多車站", transit: "漫步 4 分鐘至博多車站地下街", mapQuery: "博多駅", note: "博多站前微笑飯店辦理退房，攜帶大件行李漫步 4 分鐘推至博多車站地下街。" },
+        { time: "08:30 – 09:30", title: "【早午餐與咖啡時段】博多車站地下街悠閒朝食", transit: "車站地下街早餐名店", mapQuery: "博多駅 モーニング カフェ", note: "博多車站地下街自由挑選美味朝食，慢慢喝杯熱沖咖啡醒腦充電。" },
+        { time: "09:30 – 09:40", title: "博多站搭地鐵空港線直達福岡機場國內線", transit: "🟠 空港線 [K11 博多駅] ➔ [K13 福岡空港駅]", mapQuery: "福岡空港 国内線ターミナル", note: "博多站搭地下鐵空港線（僅 2 站約 5 分鐘）直達福岡機場國內線航廈 B2（全程箱型電梯友善）。" },
+        { time: "09:40 – 10:20", title: "【國內線航廈漫步】展望台看飛機 ＆ 特產街", transit: "搭電梯直達 4F 露天展望台", mapQuery: "福岡空港 展望デッキ", note: "逛逛開闊明亮的特產伴手禮街、搭電梯上 4 樓露天觀景台近距離看各國客機起降。" },
+        { time: "10:20 – 10:35", title: "國內線搭乘免費接駁車前往國際線航廈", transit: "機場專線免費接駁巴士直達", mapQuery: "福岡空港 国際線ターミナル", note: "於國內線搭乘機場專用免費接駁車直達國際線航廈（定點直達不混雜，約 10～15 分鐘）。" },
+        { time: "10:35 – 12:20", title: "長榮櫃檯報到 ➔ 出境安檢 ➔ 免稅店最後採買", transit: "國際線出境大廳", mapQuery: "Fukuoka Airport International Terminal", note: "國際線長榮櫃檯辦理報到與行李托運，從容通過安全檢查，於免稅店補齊最後伴手禮。" },
+        { time: "12:20 – 13:45", title: "搭乘長榮航空 BR 105 起飛，平安返抵台北", transit: "✈️ 福岡 FUK ➔ 桃園 TPE", mapQuery: "桃園國際機場 第二航廈", note: "搭乘長榮航空 BR 105 班機，平安順利降落台北桃園國際機場第二航廈！" }
       ]
     };
 
@@ -1236,6 +1249,8 @@
     let rate = parseFloat(localStorage.getItem('fk_rate')) || 0.215;
     let records = JSON.parse(localStorage.getItem('fk_records')) || [];
     let completed = JSON.parse(localStorage.getItem('fk_done_tasks')) || {};
+    
+    // 智慧載入自訂行程（自動以最新純淨版資料庫為基礎）
     let customItinerary = JSON.parse(localStorage.getItem('fk_custom_itinerary')) || JSON.parse(JSON.stringify(defaultItinerary));
     
     let currentTranslatedJa = "";
@@ -1455,6 +1470,7 @@
           if (p.transit.includes('空港') || p.transit.includes('🟠')) lineClass = 'kuko';
           else if (p.transit.includes('七隈') || p.transit.includes('🟢')) lineClass = 'nanakuma';
           else if (p.transit.includes('西鐵') || p.transit.includes('🟣')) lineClass = 'nishitetsu';
+          else if (p.transit.includes('JR') || p.transit.includes('🚆')) lineClass = 'jr';
           transitBadgeHtml = `<div class="transit-badge ${lineClass}">🚇 ${p.transit}</div>`;
         }
 
