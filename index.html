@@ -3,14 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  
-  <meta name="apple-mobile-web-app-title" content="福岡散策">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23A34E2A'/%3E%3Ctext x='90' y='118' font-size='82' text-anchor='middle' fill='%23FAF8F5' font-family='-apple-system, sans-serif'%3E%F0%9F%8D%81%3C/text%3E%3C/svg%3E">
-
   <title>秋の福岡散策手帖 ｜ 5 Days Travel Note</title>
 
   <!-- 匯出專用函式庫 -->
@@ -18,7 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <!-- Firebase 官方 SDK -->
+  <!-- Firebase 官方 SDK (compat 版，單一 HTML 零編譯環境最穩) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -926,6 +920,7 @@
 </head>
 <body>
 
+  <!-- 封面 Header 附雲端同步狀態標籤 -->
   <header>
     <div class="mag-issue-bar">
       <div class="mag-issue">Travel Note 01 ｜ Autumn Leaves</div>
@@ -938,6 +933,7 @@
     </div>
   </header>
 
+  <!-- 六欄切換導航 -->
   <nav>
     <button class="active" onclick="switchTab('itinerary', this)">日程編排 ． Plan</button>
     <button onclick="switchTab('wallet', this)">憑證收納 ． Wallet</button>
@@ -957,10 +953,11 @@
       <div class="day-pill" onclick="pickDay(5)">Day 5 ． 歸途漫步</div>
     </div>
 
+    <!-- 即時氣候與時鐘 -->
     <div class="weather-widget">
       <div class="weather-head">
         <div class="weather-city">
-          <span class="weather-icon" id="wt-icon">🌤️️</span>
+          <span class="weather-icon" id="wt-icon">🌤️</span>
           <div>
             <div class="weather-temp" id="wt-temp">--°C</div>
             <div class="weather-sub" id="wt-range">最高 --° ｜ 最低 --°</div>
@@ -978,6 +975,7 @@
       </div>
     </div>
 
+    <!-- 路線圖折疊 -->
     <div class="transit-accordion">
       <button class="transit-accordion-btn" onclick="toggleTransitMap()">
         <span>🚇 福岡地下鐵 ＆ 西鐵全線路網圖</span>
@@ -999,6 +997,7 @@
       </div>
     </div>
 
+    <!-- 行程卡片容器 -->
     <div class="itinerary-list" id="plan-container"></div>
 
     <div class="itinerary-mgr-bar">
@@ -1466,14 +1465,867 @@
   <div id="pdf-render-area"></div>
 
   <script>
-    // ====== 畫面初次啟動渲染 ======
-    window.addEventListener('DOMContentLoaded', () => {
-      drawPlans();
+    // ====== 1. 初始化 Firebase 即時資料庫 ======
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeeuk-Fd7MY5huWeHH1HjnW4h-zl1xXGQ",
+      authDomain: "fukuoka-data.firebaseapp.com",
+      databaseURL: "https://fukuoka-data-default-rtdb.firebaseio.com",
+      projectId: "fukuoka-data",
+      storageBucket: "fukuoka-data.firebasestorage.app",
+      messagingSenderId: "712334953348",
+      appId: "1:712334953348:web:3781cc4798ba13c493ebd1",
+      measurementId: "G-HM49KQ7GMX"
+    };
+
+    let rtdb = null;
+    let isFirebaseReady = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      rtdb = firebase.database();
+      isFirebaseReady = true;
+
+      // 監聽連線狀態
+      const connectedRef = rtdb.ref(".info/connected");
+      connectedRef.on("value", (snap) => {
+        const badge = document.getElementById("firebase-sync-status");
+        if (snap.val() === true) {
+          badge.className = "sync-status-badge";
+          badge.innerText = "🟢 雲端同步中";
+        } else {
+          badge.className = "sync-status-badge offline";
+          badge.innerText = "🟡 離線暫存中";
+        }
+      });
+    } catch (e) {
+      console.warn("Firebase 初始化異常，平滑切換本機離線模式", e);
+      document.getElementById("firebase-sync-status").innerText = "🟡 離線模式";
+    }
+
+    // ====== 2. 預設資料庫架構 ======
+    const defaultItinerary = {
+      1: [
+        { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", transit: "✈️ 桃園 TPE ➔ 福岡 FUK", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，通關入境、提領大件行李。" },
+        { time: "11:20 – 12:30", title: "入境 ➔ 機場接駁車 ➔ 地鐵直達博多站", transit: "🟠 空港線 [K13 福岡空港駅] ➔ [K11 博多駅]", mapQuery: "博多駅", note: "搭機場免費航廈接駁車至國內線，轉乘地下鐵空港線（僅 2 站約 5 分鐘）直達博多站。" },
+        { time: "12:30 – 13:15", title: "【飯店寄放行李】博多站前微笑飯店", transit: "博多口步行約 4 分鐘", mapQuery: "Smile Hotel Hakata Ekimae", note: "由博多口出站步行約 4 分鐘抵達「博多站前微笑飯店」寄放行李，輕裝出發。" },
+        { time: "13:15 – 14:30", title: "【午餐時段】博多車站地下街用餐", transit: "車站直通 DEITOS / 一番街", mapQuery: "博多一番街", note: "散步回博多車站地下街（博多一番街／DEITOS）自由挑選拉麵或定食暖胃。" },
+        { time: "14:30 – 15:30", title: "參拜博多總鎮守「櫛田神社」", transit: "博多站散步約 10 分鐘直達", mapQuery: "櫛田神社 福岡", note: "白天參拜、近距離欣賞巨型常設飾山笠與千年夫婦銀杏樹。" },
+        { time: "15:30 – 16:45", title: "漫步「川端通商店街」", transit: "出神社北口即直通拱廊", mapQuery: "川端通商店街", note: "出神社北口直通川端通商店街，挑高拱廊遮蔭，逛老舖雜貨與紅豆麻糬湯。" },
+        { time: "16:45 – 17:00", title: "中洲川端站搭地鐵空港線直達博多站", transit: "🟠 空港線 [K09 中洲川端駅] ➔ [K11 博多駅]", mapQuery: "中洲川端駅", note: "商店街北端「中洲川端站」搭地鐵空港線（僅 2 站約 3 分鐘）直達返回博多站。" },
+        { time: "17:00 – 18:30", title: "【飯店 Check-in 徹底休息】", transit: "步行 4 分鐘回微笑飯店", mapQuery: "Smile Hotel Hakata Ekimae", note: "步行 4 分鐘回博多站前微笑飯店進房放鬆洗臉、補眠小憩充電。" },
+        { time: "18:30 – 20:00", title: "【晚餐時段】とめ手羽 金賞酥脆炸雞翅", transit: "同街區步行 3 分鐘", mapQuery: "とめ手羽 博多駅前店", note: "同街區步行 3 分鐘居酒屋，品嚐榮獲多次日本金賞的招牌酥脆炸雞翅。" },
+        { time: "20:00 – 20:40", title: "【高空夜景】JR 博多城頂樓「燕之杜廣場」", transit: "搭透明電梯直達 RF 屋頂層", mapQuery: "JR博多シティ つばめの杜ひろば", note: "俯瞰博多大通車流光軌、遠眺客機降落航道與開闊夜景。" },
+        { time: "20:40 – 21:20", title: "【綠洲散策】明治公園立體迴廊步道", transit: "下樓漫步 3 分鐘即達", mapQuery: "明治公園 福岡市博多区", note: "漫步立體空中步道、在 POSS COFFEE 外帶杯熱飲坐在階梯吹晚風。" },
+        { time: "21:20 之後", title: "散步走回微笑飯店，泡澡就寢", transit: "散步僅 1～2 分鐘（約 150m）", mapQuery: "Smile Hotel Hakata Ekimae", note: "從明治公園步行約 150 公尺輕鬆回飯店，泡澡放鬆就寢。" }
+      ],
+      2: [
+        { time: "09:00 – 09:20", title: "博多站搭地鐵空港線直達「西新站」", transit: "🟠 空港線 [K11 博多駅] ➔ [K04 西新駅]", mapQuery: "西新駅", note: "飯店步行 4 分鐘至博多站，搭乘空港線直達西新站（約 9 分鐘，1 號出口出站）。" },
+        { time: "09:20 – 11:30", title: "海螺小姐通 ➔ 百道濱沙灘 ＆ 福岡塔海灣", transit: "西新站 1號出口 散步 1.4km", mapQuery: "福岡タワー", note: "沿平坦開闊的海螺小姐通散步約 20 分鐘至海邊，漫步百道濱沙灘，登福岡塔展望台俯瞰海灣。" },
+        { time: "11:30 – 12:00", title: "西新站搭地鐵空港線直達「大濠公園站」", transit: "🟠 空港線 [K04 西新駅] ➔ [K06 大濠公園駅]", mapQuery: "大濠公園駅", note: "由福岡塔散步回西新站，搭乘地下鐵空港線直達大濠公園站（僅 2 站約 3 分鐘）。" },
+        { time: "12:00 – 13:15", title: "【午餐時段】大濠公園水岸景觀餐廳", transit: "大濠公園 湖畔周邊", mapQuery: "大濠公園 レストラン", note: "大濠公園水岸景觀餐廳周邊自由用餐，享受湖畔愜意風光。" },
+        { time: "13:15 – 14:15", title: "大濠公園湖畔 ＆ 舞鶴公園福岡城天守台", transit: "大濠公園 ➔ 舞鶴公園天守台跡", mapQuery: "福岡城 潮見櫓 天守台跡", note: "湖畔悠閒散步，順走至舞鶴公園登上福岡城天守台跡，遠眺市區開闊天際線。" },
+        { time: "14:15 – 17:00", title: "地鐵至天神／赤坂 ➔ 「藥院」生活街區散策", transit: "🟠 空港線 [K06 大濠公園] ➔ [K07 赤坂/K08 天神]", mapQuery: "薬院 カフェ", note: "搭地鐵 1 站後散步前往藥院生活街區，逛選物生活雜貨、品嚐法式舒芙蕾手作下午茶。" },
+        { time: "17:00 – 18:30", title: "天神大名潮流街區 ＆ 警固神社足湯", transit: "天神站步行 5 分鐘", mapQuery: "警固神社 足湯", note: "漫步大名潮流店鋪，走進警固神社享受免費天然溫泉足湯，舒緩今日雙腳疲憊。" },
+        { time: "18:30 – 20:00", title: "【晚餐時段】天神／今泉商圈在地料理", transit: "天神今泉商圈居酒屋", mapQuery: "天神 もつ鍋", note: "商圈周邊享用在地名物料理（如博多牛腸鍋或特色炙烤居酒屋）。" },
+        { time: "20:00 之後", title: "天神站搭地鐵直達博多站，回飯店休息", transit: "🟠 空港線 [K08 天神駅] ➔ [K11 博多駅]", mapQuery: "Smile Hotel Hakata Ekimae", note: "天神站搭地鐵空港線（3 站直達）回博多站，散步 4 分鐘回微笑飯店休息。" }
+      ],
+      3: [
+        { time: "08:15 – 09:37", title: "博多 ➔ 西鐵天神搭特急直達「西鐵柳川站」", transit: "🟣 西鐵特急 [T01 福岡] ➔ [T39 柳川]", mapQuery: "西鉄柳川駅", note: "博多搭地鐵至天神，步行至西鐵福岡站搭特急直達西鐵柳川站（清晨直奔最南端，避開團客潮）。" },
+        { time: "09:45 – 11:00", title: "柳川水鄉遊船（川下り）", transit: "柳川乘船場 接駁車直達", mapQuery: "柳川川下り乗船場", note: "清晨在柳樹石橋下悠然泛舟漫遊約 60 分鐘，感受水鄉詩意。" },
+        { time: "11:15 – 12:45", title: "【午餐時段】柳川沖端老街蒸籠鰻魚飯", transit: "沖端老街 鰻魚百年名店", mapQuery: "柳川 うなぎ せいろ蒸し", note: "沖端老街自由享用炭火現烤熱騰騰的招牌蒸籠鰻魚飯（せいろ蒸し）。" },
+        { time: "13:00 – 14:15", title: "西鐵電車至二日市轉乘至「太宰府站」", transit: "🟣 西鐵大牟田線 ➔ [T13 二日市] 轉 [D02 太宰府]", mapQuery: "太宰府駅", note: "搭西鐵電車北上至西鐵二日市站，同站轉乘太宰府線直達太宰府站。" },
+        { time: "14:15 – 16:30", title: "參拜「太宰府天滿宮」＆ 表參道散策", transit: "太宰府站出站即是表參道", mapQuery: "太宰府天満宮", note: "欣賞漂浮森林假殿、隈研吾星巴克概念店、品嚐現烤酥熱梅枝餅。" },
+        { time: "16:30 – 17:30", title: "西鐵藥院站轉乘七隈線直通天神南站", transit: "🟣 西鐵 [T02 藥院] 轉 🟢 七隈線 [N05 藥院] ➔ [N06 天神南]", mapQuery: "天神南駅", note: "搭西鐵北返，於西鐵藥院站同站換乘七隈線直通天神南站（避開天神大站人潮）。" },
+        { time: "17:30 – 18:30", title: "天神中央公園 ＆ 舊公會堂貴賓館夜燈", transit: "天神南站步行 3 分鐘", mapQuery: "旧福岡県公会堂貴賓館", note: "漫步天神中央公園，欣賞明治法式木造舊公會堂貴賓館復古夜燈與水岸夜色。" },
+        { time: "18:30 – 20:00", title: "【晚餐時段】天神南／春吉水岸／中洲屋台", transit: "中洲春吉水岸小吃", mapQuery: "中洲屋台街", note: "天神南／春吉水岸享用特色晚餐，或造訪中洲屋台體驗在地熱鬧小吃。" },
+        { time: "20:00 之後", title: "天神南站搭七隈線回博多站，回飯店休息", transit: "🟢 七隈線 [N06 天神南] ➔ [N08 博多駅]", mapQuery: "Smile Hotel Hakata Ekimae", note: "天神南站搭地下鐵七隈線（僅 2 站直達）返回博多站，散步 4 分鐘回微笑飯店休息。" }
+      ],
+      4: [
+        { time: "09:30 – 12:30", title: "【JR 軌道直達】LaLaPort 福岡 朝聖 ν 鋼彈", transit: "🚆 JR 鹿兒島本線 [博多] ➔ [竹下]（僅1站4分）", mapQuery: "三井ショッピングパーク ららぽーと福岡", note: "博多站搭 JR 普通車 1 站直達「竹下站」，人行道散步約 9 分鐘即達，朝聖鋼彈聲光演出與商場逛街。" },
+        { time: "12:30 – 14:00", title: "JR 回博多轉地鐵空港線至天神 ➔【午餐時段】", transit: "🚆 竹下 ➔ 博多 轉 🟠 空港線 [K11 博多] ➔ [K08 天神]", mapQuery: "天神 ランチ", note: "散步回竹下站搭 JR 回博多（1 站），轉搭空港線至天神站，天神商圈自由享用美味午餐。" },
+        { time: "14:00 – 17:00", title: "天神商圈平日集中採買（地下街 / Mina / 選物）", transit: "天神地下街直通各百貨", mapQuery: "天神地下街", note: "天神地下街、Mina天神、大名選物店，週一人少退稅極快，集中一次購齊。" },
+        { time: "17:00 – 18:30", title: "地鐵七隈線至櫛田神社前站 ➔ 博多運河城水舞", transit: "🟢 七隈線 [N06 天神南] ➔ [N07 櫛田神社前]（地下通道直通）", mapQuery: "キャナルシティ博多", note: "天神南搭七隈線僅 1 站至「櫛田神社前站」，由地下通道直通運河城，看整點水舞秀與 Alpen 旗艦店。" },
+        { time: "18:30 – 19:30", title: "步行回博多站 ＆ 阪急 B1 伴手禮補齊", transit: "運河城步行約 10 分鐘至博多車站", mapQuery: "博多阪急", note: "由運河城步行約 10 分鐘回博多車站，在博多阪急 B1 伴手禮街一次補足各大盒裝排隊名產。" },
+        { time: "19:30 – 21:00", title: "【晚餐時段】博多車站周邊豐盛大餐", transit: "JR 博多城頂級美食街", mapQuery: "博多駅 レストラン", note: "旅程最後一晚在車站周邊自由挑選豐盛大餐，舉杯慶祝美好的福岡散策。" },
+        { time: "21:00 之後", title: "回微笑飯店整理行李箱、秤重打包", transit: "散步 4 分鐘回飯店", mapQuery: "Smile Hotel Hakata Ekimae", note: "散步 4 分鐘回博多站前微笑飯店，分類打包托運品、秤重準備明日歸途。" }
+      ],
+      5: [
+        { time: "08:00 – 08:30", title: "微笑飯店辦理退房，攜帶行李至博多車站", transit: "漫步 4 分鐘至博多車站地下街", mapQuery: "博多駅", note: "博多站前微笑飯店辦理退房，攜帶大件行李漫步 4 分鐘推至博多車站地下街。" },
+        { time: "08:30 – 09:30", title: "【早午餐與咖啡時段】博多車站地下街悠閒朝食", transit: "車站地下街早餐名店", mapQuery: "博多駅 モーニング カフェ", note: "博多車站地下街自由挑選美味朝食，慢慢喝杯熱沖咖啡醒腦充電。" },
+        { time: "09:30 – 09:40", title: "博多站搭地鐵空港線直達福岡機場國內線", transit: "🟠 空港線 [K11 博多駅] ➔ [K13 福岡空港駅]", mapQuery: "福岡空港 国内線ターミナル", note: "博多站搭地下鐵空港線（僅 2 站約 5 分鐘）直達福岡機場國內線航廈 B2（全程箱型電梯友善）。" },
+        { time: "09:40 – 10:20", title: "【國內線航廈漫步】展望台看飛機 ＆ 特產街", transit: "搭電梯直達 4F 露天展望台", mapQuery: "福岡空港 展望デッキ", note: "逛逛開闊明亮的特產伴手禮街、搭電梯上 4 樓露天觀景台近距離看各國客機起降。" },
+        { time: "10:20 – 10:35", title: "國內線搭乘免費接駁車前往國際線航廈", transit: "機場專線免費接駁巴士直達", mapQuery: "福岡空港 国際線ターミナル", note: "於國內線搭乘機場專用免費接駁車直達國際線航廈（定點直達不混雜，約 10～15 分鐘）。" },
+        { time: "10:35 – 12:20", title: "長榮櫃檯報到 ➔ 出境安檢 ➔ 免稅店最後採買", transit: "國際線出境大廳", mapQuery: "Fukuoka Airport International Terminal", note: "國際線長榮櫃檯辦理報到與行李托運，從容通過安全檢查，於免稅店補齊最後伴手禮。" },
+        { time: "12:20 – 13:45", title: "搭乘長榮航空 BR 105 起飛，平安返抵台北", transit: "✈️ 福岡 FUK ➔ 桃園 TPE", mapQuery: "桃園國際機場 第二航廈", note: "搭乘長榮航空 BR 105 班機，平安順利降落台北桃園國際機場第二航廈！" }
+      ]
+    };
+
+    const phraseDatabase = {
+      dining: [
+        { zh: "請給我中文菜單", ja: "中国語のメニューはありますか？" },
+        { zh: "請給我開水／冰水", ja: "お冷（お水）をいただけますか？" },
+        { zh: "請問有推薦的招牌菜嗎？", ja: "おすすめのメニューは何ですか？" },
+        { zh: "請幫我們結帳", ja: "お会計をお願いします。" },
+        { zh: "可以分開結帳嗎？", ja: "別々でお会計できますか？" }
+      ],
+      transit: [
+        { zh: "不好意思，請問洗手間在哪裡？", ja: "すみません、お手洗いはどこですか？" },
+        { zh: "請問這班車有到博多站嗎？", ja: "この電車は博多駅に行きますか？" },
+        { zh: "請問搭車處是在幾號月台？", ja: "何番ホームですか？" },
+        { zh: "我想去這個地方，請問怎麼走？", ja: "ここに行きたいのですが、どう行けばいいですか？" }
+      ],
+      shopping: [
+        { zh: "請問可以辦理退稅嗎？", ja: "免税（Tax Free）はできますか？" },
+        { zh: "請問這個有新的／未拆封的庫存嗎？", ja: "新しい在庫はありますか？" },
+        { zh: "可以用信用卡或IC卡付款嗎？", ja: "クレジットカードやICカードは使えますか？" },
+        { zh: "請幫我把這兩件分開包裝", ja: "別々にラッピングしていただけますか？" }
+      ],
+      hotel: [
+        { zh: "我可以先寄放行李嗎？", ja: "チェックイン前ですが、荷物を預かっていただけますか？" },
+        { zh: "退房後還可以寄放行李到傍晚嗎？", ja: "チェックアウト後、夕方まで荷物を預けられますか？" },
+        { zh: "請問 WiFi 密碼是多少？", ja: "Wi-Fiのパスワードを教えていただけますか？" }
+      ]
+    };
+
+    let activeDay = 1;
+    let liveFetchedRate = 0.2150;
+    let rate = 0.2150;
+    let records = JSON.parse(localStorage.getItem('fk_records')) || [];
+    let completed = JSON.parse(localStorage.getItem('fk_done_tasks')) || {};
+    let customItinerary = JSON.parse(localStorage.getItem('fk_custom_itinerary')) || JSON.parse(JSON.stringify(defaultItinerary));
+
+    let walletData = JSON.parse(localStorage.getItem('fk_wallet_data')) || {
+      flightPnr: "EJABM6",
+      hotelConfirm: "RYa0ngw55e",
+      hotelPin: "6919",
+      hotelOrder: "1616333867909966"
+    };
+
+    let cloudData = JSON.parse(localStorage.getItem('fk_cloud_data')) || {
+      driveUrl: "https://drive.google.com/drive/folders/1H4iyt0DRihlnc6TO2D53mQyz0qC6JPlM?usp=drive_link",
+      photoUrl: "https://drive.google.com/drive/folders/1ob-LnFy4P8SHY4ELd-ib_wPybvFpb_Bv?usp=drive_link"
+    };
+
+    let taxMode = 'ex';
+    let taxRateVal = 0.10;
+    let isCustomRateMode = false;
+    let currentTranslatedJa = "";
+    let currentInputZh = "";
+    let activePhraseCat = 'dining';
+
+    // ====== 3. 雙向即時雲端監聽器 (Realtime Listeners) ======
+    if (isFirebaseReady) {
+      // 監聽行程
+      rtdb.ref("fukuoka_trip/itinerary").on("value", (snapshot) => {
+        const cloudDataVal = snapshot.val();
+        if (cloudDataVal) {
+          customItinerary = cloudDataVal;
+          localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+          drawPlans();
+        }
+      });
+
+      // 監聽行程打勾完成狀態
+      rtdb.ref("fukuoka_trip/completed").on("value", (snapshot) => {
+        const cloudDone = snapshot.val();
+        if (cloudDone) {
+          completed = cloudDone;
+          localStorage.setItem('fk_done_tasks', JSON.stringify(completed));
+          drawPlans();
+        }
+      });
+
+      // 監聽記帳記錄
+      rtdb.ref("fukuoka_trip/records").on("value", (snapshot) => {
+        const cloudRecs = snapshot.val();
+        if (cloudRecs) {
+          records = cloudRecs;
+          localStorage.setItem('fk_records', JSON.stringify(records));
+          drawRecords();
+        }
+      });
+    }
+
+    // 雲端同步輔助函式
+    function syncItineraryToCloud() {
+      localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+      if (isFirebaseReady) rtdb.ref("fukuoka_trip/itinerary").set(customItinerary);
+    }
+
+    function syncCompletedToCloud() {
+      localStorage.setItem('fk_done_tasks', JSON.stringify(completed));
+      if (isFirebaseReady) rtdb.ref("fukuoka_trip/completed").set(completed);
+    }
+
+    function syncRecordsToCloud() {
+      localStorage.setItem('fk_records', JSON.stringify(records));
+      if (isFirebaseReady) rtdb.ref("fukuoka_trip/records").set(records);
+    }
+
+    // 語音引擎初始化
+    let synthVoices = [];
+    function initSpeechEngine() {
+      if ('speechSynthesis' in window) {
+        synthVoices = window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          synthVoices = window.speechSynthesis.getVoices();
+        };
+      }
+    }
+    initSpeechEngine();
+
+    const today = new Date();
+    document.getElementById('k-date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+    // 取得當日即時匯率
+    async function fetchLiveExchangeRate() {
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/JPY');
+        const data = await res.json();
+        if (data && data.rates && data.rates.TWD) {
+          liveFetchedRate = data.rates.TWD;
+          document.getElementById('live-api-rate').innerText = `1 JPY ≈ ${liveFetchedRate.toFixed(4)} TWD`;
+          
+          const savedCustom = localStorage.getItem('fk_custom_rate');
+          if (savedCustom) {
+            rate = parseFloat(savedCustom);
+          } else {
+            rate = liveFetchedRate;
+          }
+          applyRateDisplay();
+        }
+      } catch (e) {
+        liveFetchedRate = 0.2150;
+        document.getElementById('live-api-rate').innerText = `1 JPY ≈ 0.2150 TWD (離線基準)`;
+        rate = parseFloat(localStorage.getItem('fk_custom_rate')) || 0.2150;
+        applyRateDisplay();
+      }
+    }
+
+    function applyRateDisplay() {
+      document.getElementById('user-custom-rate').value = rate.toFixed(4);
+      document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
+      runTaxCalc();
       drawRecords();
-      renderPhrases();
+    }
+
+    function updateCustomRate(val) {
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed) && parsed > 0) {
+        rate = parsed;
+        localStorage.setItem('fk_custom_rate', rate);
+        applyRateDisplay();
+      }
+    }
+
+    function resetToLiveRate() {
+      rate = liveFetchedRate;
+      localStorage.removeItem('fk_custom_rate');
+      applyRateDisplay();
+    }
+
+    fetchLiveExchangeRate();
+
+    // 時鐘
+    function updateFukuokaClock() {
+      const clockEl = document.getElementById('live-clock');
+      if (!clockEl) return;
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('zh-TW', {
+        timeZone: 'Asia/Tokyo',
+        month: 'numeric', day: 'numeric', weekday: 'short',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      });
+      const parts = formatter.formatToParts(now);
+      let m='', d='', wd='', hr='', min='';
+      parts.forEach(p => {
+        if (p.type === 'month') m = p.value;
+        if (p.type === 'day') d = p.value;
+        if (p.type === 'weekday') wd = p.value;
+        if (p.type === 'hour') hr = p.value;
+        if (p.type === 'minute') min = p.value;
+      });
+      clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
+    }
+    updateFukuokaClock();
+    setInterval(updateFukuokaClock, 1000);
+
+    // 天氣
+    async function fetchWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
+        const data = await res.json();
+        const curr = Math.round(data.current.temperature_2m);
+        const max = Math.round(data.daily.temperature_2m_max[0]);
+        const min = Math.round(data.daily.temperature_2m_min[0]);
+        const rain = data.daily.precipitation_probability_max[0] || 0;
+        document.getElementById('wt-temp').innerText = `${curr}°C`;
+        document.getElementById('wt-range').innerText = `最高 ${max}° ｜ 最低 ${min}°`;
+        document.getElementById('wt-rain').innerText = `💧 降雨機率 ${rain}%`;
+        document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
+        document.getElementById('outfit-badges').innerHTML = `
+          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${min < 18 ? '薄風衣 / 開襟針織' : '輕夾克'}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">透氣棉T / 長袖襯衫</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rain >= 30 ? '摺疊傘 ． 備用' : '防曬墨鏡 ． 輕便'}</span></div></div>
+        `;
+      } catch (e) {
+        document.getElementById('wt-temp').innerText = '21°C';
+      }
+    }
+    fetchWeather();
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      if (el) el.classList.add('active');
+      document.getElementById(`${tabId}-view`).classList.add('active');
+      if (tabId === 'wallet') renderWalletView();
+      if (tabId === 'cloud') renderCloudView();
+      if (tabId === 'kakeibo') drawRecords();
+      if (tabId === 'translate') renderPhrases();
+    }
+
+    function pickDay(d) {
+      activeDay = d;
+      document.querySelectorAll('.day-pill').forEach((p, idx) => p.classList.toggle('active', idx + 1 === d));
+      drawPlans();
+    }
+
+    function toggleTransitMap() {
+      const c = document.getElementById('transit-content');
+      c.classList.toggle('active');
+      document.getElementById('transit-arrow').innerText = c.classList.contains('active') ? '▲ 收起' : '▼ 展開';
+    }
+
+    function handleMetroImgError(img) {
+      img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Fukuoka_city_subway_map_JA_2023.png/1280px-Fukuoka_city_subway_map_JA_2023.png";
+    }
+
+    function openImageModal(src) {
+      document.getElementById('imgModalSrc').src = src;
+      document.getElementById('imgModal').classList.add('active');
+    }
+    function closeImageModal() { document.getElementById('imgModal').classList.remove('active'); }
+
+    function parseTimeToMinutes(t) {
+      if (!t) return 9999;
+      const m = t.match(/(\d{1,2}):(\d{2})/);
+      return m ? parseInt(m[1],10)*60 + parseInt(m[2],10) : 9999;
+    }
+
+    function drawPlans() {
+      const box = document.getElementById('plan-container');
+      const list = customItinerary[activeDay] || [];
+      box.innerHTML = list.map((p, idx) => {
+        const tid = `day_${activeDay}_${idx}`;
+        const isDone = completed[tid] ? 'done' : '';
+        let badgeClass = '';
+        if (p.transit.includes('空港') || p.transit.includes('🟠')) badgeClass = 'kuko';
+        else if (p.transit.includes('七隈') || p.transit.includes('🟢')) badgeClass = 'nanakuma';
+        else if (p.transit.includes('西鐵') || p.transit.includes('🟣')) badgeClass = 'nishitetsu';
+        else if (p.transit.includes('JR') || p.transit.includes('🚆')) badgeClass = 'jr';
+
+        return `
+          <div class="plan-card ${isDone}" data-index="${idx}">
+            <div class="plan-meta">
+              <span class="time-tag">${p.time}</span>
+              <div class="plan-actions">
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.mapQuery || p.title)}" target="_blank" rel="noopener noreferrer" class="btn-map">📍 導航</a>
+                <button class="btn-sm" onclick="editPlanItem(${idx})">✏️</button>
+                <button class="btn-sm" style="color:#A19B91;" onclick="deletePlanItem(${idx})">🗑️</button>
+                <div class="drag-handle">⠿</div>
+                <button class="btn-check" onclick="togglePlan('${tid}')">✓</button>
+              </div>
+            </div>
+            <div class="plan-title">${p.title}</div>
+            <div class="transit-badge ${badgeClass}">🚇 ${p.transit}</div>
+            <div class="plan-note">${p.note}</div>
+          </div>
+        `;
+      }).join('');
+      initTouchDrag();
+    }
+
+    function togglePlan(id) {
+      completed[id] = !completed[id];
+      syncCompletedToCloud();
+      drawPlans();
+    }
+
+    function initTouchDrag() {
+      const container = document.getElementById('plan-container');
+      container.querySelectorAll('.drag-handle').forEach(handle => {
+        let card = null, isDrag = false;
+        handle.addEventListener('touchstart', (e) => {
+          card = handle.closest('.plan-card');
+          if (!card) return;
+          isDrag = true;
+          card.classList.add('dragging');
+        }, { passive: false });
+
+        handle.addEventListener('touchmove', (e) => {
+          if (!isDrag || !card) return;
+          e.preventDefault();
+          const curY = e.touches[0].clientY;
+          const siblings = [...container.querySelectorAll('.plan-card:not(.dragging)')];
+          const next = siblings.find(sib => {
+            const b = sib.getBoundingClientRect();
+            return curY < b.top + b.height / 2;
+          });
+          if (!next) container.appendChild(card);
+          else container.insertBefore(card, next);
+        }, { passive: false });
+
+        const endDrag = () => {
+          if (!isDrag || !card) return;
+          card.classList.remove('dragging');
+          isDrag = false;
+          const reordered = [...container.querySelectorAll('.plan-card')].map(c => {
+            return customItinerary[activeDay][parseInt(c.getAttribute('data-index'), 10)];
+          });
+          customItinerary[activeDay] = reordered;
+          syncItineraryToCloud();
+          drawPlans();
+        };
+        handle.addEventListener('touchend', endDrag);
+        handle.addEventListener('touchcancel', endDrag);
+      });
+    }
+
+    function openAddPlanModal() {
+      document.getElementById('plan-modal-title').innerText = `新增 Day ${activeDay} 行程`;
+      document.getElementById('edit-plan-idx').value = "-1";
+      document.getElementById('edit-plan-time').value = "";
+      document.getElementById('edit-plan-title').value = "";
+      document.getElementById('edit-plan-transit').value = "";
+      document.getElementById('edit-plan-map').value = "";
+      document.getElementById('edit-plan-note').value = "";
+      document.getElementById('planModal').classList.add('active');
+    }
+
+    function editPlanItem(idx) {
+      const p = customItinerary[activeDay][idx];
+      document.getElementById('plan-modal-title').innerText = `編輯行程`;
+      document.getElementById('edit-plan-idx').value = idx;
+      document.getElementById('edit-plan-time').value = p.time;
+      document.getElementById('edit-plan-title').value = p.title;
+      document.getElementById('edit-plan-transit').value = p.transit;
+      document.getElementById('edit-plan-map').value = p.mapQuery;
+      document.getElementById('edit-plan-note').value = p.note;
+      document.getElementById('planModal').classList.add('active');
+    }
+
+    function deletePlanItem(idx) {
+      if (confirm('確定刪除此行程？（雙方手機將同步刪除）')) {
+        customItinerary[activeDay].splice(idx, 1);
+        syncItineraryToCloud();
+        drawPlans();
+      }
+    }
+
+    function closePlanModal() { document.getElementById('planModal').classList.remove('active'); }
+
+    function savePlanItem() {
+      const idx = parseInt(document.getElementById('edit-plan-idx').value, 10);
+      const time = document.getElementById('edit-plan-time').value.trim() || "自由時段";
+      const title = document.getElementById('edit-plan-title').value.trim();
+      const transit = document.getElementById('edit-plan-transit').value.trim();
+      const mapQuery = document.getElementById('edit-plan-map').value.trim() || title;
+      const note = document.getElementById('edit-plan-note').value.trim();
+      if (!title) return alert('請輸入標題！');
+
+      const item = { time, title, transit, mapQuery, note };
+      if (idx === -1) customItinerary[activeDay].push(item);
+      else customItinerary[activeDay][idx] = item;
+
+      customItinerary[activeDay].sort((a,b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
+      syncItineraryToCloud();
+      closePlanModal();
+      drawPlans();
+    }
+
+    function resetCurrentDayPlans() {
+      if (confirm(`確定恢復 Day ${activeDay} 預設行程？`)) {
+        customItinerary[activeDay] = JSON.parse(JSON.stringify(defaultItinerary[activeDay]));
+        syncItineraryToCloud();
+        drawPlans();
+      }
+    }
+
+    function renderWalletView() {
+      document.getElementById('w-flight-pnr').innerText = walletData.flightPnr || 'EJABM6';
+      document.getElementById('w-hotel-confirm').innerText = walletData.hotelConfirm || 'RYa0ngw55e';
+      document.getElementById('w-hotel-pin').innerText = walletData.hotelPin || '6919';
+      document.getElementById('w-hotel-order').innerText = walletData.hotelOrder || '1616333867909966';
+    }
+
+    function editWalletItem(type) {
+      document.getElementById('edit-wallet-type').value = type;
+      document.getElementById('wallet-inputs-flight').style.display = type === 'flight' ? 'block' : 'none';
+      document.getElementById('wallet-inputs-hotel').style.display = type === 'hotel' ? 'block' : 'none';
+
+      if (type === 'flight') {
+        document.getElementById('wallet-modal-title').innerText = '編輯航班訂位代號';
+        document.getElementById('wallet-input-pnr').value = walletData.flightPnr || 'EJABM6';
+      } else if (type === 'hotel') {
+        document.getElementById('wallet-modal-title').innerText = '編輯飯店入住憑證';
+        document.getElementById('wallet-input-confirm').value = walletData.hotelConfirm || 'RYa0ngw55e';
+        document.getElementById('wallet-input-pin').value = walletData.hotelPin || '6919';
+        document.getElementById('wallet-input-order').value = walletData.hotelOrder || '1616333867909966';
+      }
+      document.getElementById('walletModal').classList.add('active');
+    }
+
+    function saveWalletItem() {
+      const type = document.getElementById('edit-wallet-type').value;
+      if (type === 'flight') {
+        walletData.flightPnr = document.getElementById('wallet-input-pnr').value.trim() || 'EJABM6';
+      } else if (type === 'hotel') {
+        walletData.hotelConfirm = document.getElementById('wallet-input-confirm').value.trim() || 'RYa0ngw55e';
+        walletData.hotelPin = document.getElementById('wallet-input-pin').value.trim() || '6919';
+        walletData.hotelOrder = document.getElementById('wallet-input-order').value.trim() || '1616333867909966';
+      }
+      localStorage.setItem('fk_wallet_data', JSON.stringify(walletData));
+      closeWalletModal();
       renderWalletView();
+    }
+
+    function closeWalletModal() { document.getElementById('walletModal').classList.remove('active'); }
+
+    function setTaxMode(m) {
+      taxMode = m;
+      document.getElementById('btn-tax-ex').classList.toggle('active', m === 'ex');
+      document.getElementById('btn-tax-in').classList.toggle('active', m === 'in');
+      runTaxCalc();
+    }
+
+    function setTaxRatePreset(r) {
+      isCustomRateMode = false;
+      taxRateVal = r;
+      document.getElementById('btn-rate-10').classList.toggle('active', r === 0.10);
+      document.getElementById('btn-rate-8').classList.toggle('active', r === 0.08);
+      document.getElementById('btn-rate-custom').classList.remove('active');
+      document.getElementById('custom-rate-box').classList.remove('active');
+      runTaxCalc();
+    }
+
+    function toggleCustomRateInput() {
+      isCustomRateMode = true;
+      document.getElementById('btn-rate-10').classList.remove('active');
+      document.getElementById('btn-rate-8').classList.remove('active');
+      document.getElementById('btn-rate-custom').classList.add('active');
+      document.getElementById('custom-rate-box').classList.add('active');
+      const val = parseFloat(document.getElementById('custom-rate-val').value);
+      if (!isNaN(val)) taxRateVal = val / 100;
+      runTaxCalc();
+    }
+
+    function applyCustomRateVal(val) {
+      const p = parseFloat(val);
+      taxRateVal = (!isNaN(p) && p >= 0) ? p / 100 : 0;
+      runTaxCalc();
+    }
+
+    function runTaxCalc() {
+      const inputVal = parseFloat(document.getElementById('calc-input-yen').value) || 0;
+      let exYen = 0, inYen = 0;
+      if (taxMode === 'ex') {
+        exYen = inputVal;
+        inYen = Math.round(inputVal * (1 + taxRateVal));
+      } else {
+        inYen = inputVal;
+        exYen = Math.round(inputVal / (1 + taxRateVal));
+      }
+
+      const isPass = exYen >= 5000;
+      const statusBox = document.getElementById('tax-status-box');
+      if (isPass) {
+        statusBox.className = 'tax-badge-status tax-badge-pass';
+        statusBox.innerText = `✓ 已達退稅門檻 (未稅滿 ¥5,000)，可享免稅價！`;
+      } else {
+        statusBox.className = 'tax-badge-status tax-badge-short';
+        const diff = 5000 - exYen;
+        statusBox.innerText = `差 ¥${diff.toLocaleString()} 可達退稅門檻 (約 NT$ ${Math.round(diff * rate)})`;
+      }
+
+      const finalYen = isPass ? exYen : inYen;
+      const finalTwd = Math.round(finalYen * rate);
+      document.getElementById('calc-jpy-res').innerText = `¥ ${finalYen.toLocaleString()} ${isPass ? '(免稅)' : '(含稅)'}`;
+      document.getElementById('calc-twd-res').innerText = `NT$ ${finalTwd.toLocaleString()}`;
+    }
+
+    function applyCalcToKakeibo() {
+      const inputVal = parseFloat(document.getElementById('calc-input-yen').value) || 0;
+      if (inputVal <= 0) return alert('請先輸入金額！');
+      let exYen = taxMode === 'ex' ? inputVal : Math.round(inputVal / (1 + taxRateVal));
+      let finalYen = exYen >= 5000 ? exYen : (taxMode === 'in' ? inputVal : Math.round(inputVal * (1 + taxRateVal)));
+      
+      document.getElementById('k-curr').value = 'JPY';
+      document.getElementById('k-amount').value = finalYen;
+      document.getElementById('k-item').value = `退稅採買 (未稅¥${exYen})`;
+      window.scrollTo({ top: document.querySelector('.kakeibo-form').offsetTop - 60, behavior: 'smooth' });
+    }
+
+    function saveRecord() {
+      const dateVal = document.getElementById('k-date').value;
+      const name = document.getElementById('k-item').value.trim();
+      const amount = parseFloat(document.getElementById('k-amount').value);
+      const curr = document.getElementById('k-curr').value;
+      const type = document.getElementById('k-type').value;
+      const pay = document.getElementById('k-payment').value;
+      if (!name || isNaN(amount) || amount <= 0) return alert('請填寫完整名目與金額！');
+
+      let twd = curr === 'JPY' ? Math.round(amount * rate) : Math.round(amount);
+      let jpy = curr === 'JPY' ? Math.round(amount) : Math.round(amount / rate);
+      let displayDate = dateVal;
+      if (dateVal && dateVal.includes('-')) {
+        const parts = dateVal.split('-');
+        displayDate = `${parts[1]}/${parts[2]}`;
+      }
+
+      records.push({
+        id: Date.now(),
+        rawDate: dateVal || new Date().toISOString().split('T')[0],
+        displayDate, name, twd, jpy, type, pay
+      });
+      records.sort((a,b) => (b.rawDate || '').localeCompare(a.rawDate || ''));
+      syncRecordsToCloud();
+
+      document.getElementById('k-item').value = '';
+      document.getElementById('k-amount').value = '';
+      drawRecords();
+    }
+
+    function removeRecord(id) {
+      if (confirm('確定刪除此筆記帳？（雙方手機將同步刪除）')) {
+        records = records.filter(r => r.id !== id);
+        syncRecordsToCloud();
+        drawRecords();
+      }
+    }
+
+    function drawRecords() {
+      let totTwd = 0, totJpy = 0;
+      records.forEach(r => { totTwd += r.twd; totJpy += r.jpy; });
+      document.getElementById('sum-twd').innerText = `NT$ ${totTwd.toLocaleString()}`;
+      document.getElementById('sum-jpy').innerText = `¥ ${totJpy.toLocaleString()}`;
+
+      const box = document.getElementById('kakeibo-records-box');
+      if (records.length === 0) {
+        box.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.8rem;">尚無記帳記錄</div>`;
+        return;
+      }
+
+      const grouped = {};
+      records.forEach(r => {
+        const k = r.rawDate || '其他';
+        if (!grouped[k]) grouped[k] = [];
+        grouped[k].push(r);
+      });
+
+      let html = '';
+      for (const [dateKey, items] of Object.entries(grouped)) {
+        let subTwd = 0, subJpy = 0;
+        items.forEach(it => { subTwd += it.twd; subJpy += it.jpy; });
+        html += `
+          <div class="date-group">
+            <div class="date-group-header">
+              <span class="date-title">🗓 ${dateKey}</span>
+              <span class="date-subtotal">小計 NT$ ${subTwd.toLocaleString()} (¥ ${subJpy.toLocaleString()})</span>
+            </div>
+            ${items.map(it => `
+              <div class="record-card">
+                <div>
+                  <div class="rec-main">${it.name}</div>
+                  <div class="rec-meta">${it.type} ．${it.pay}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <div>
+                    <div class="rec-twd">NT$ ${it.twd.toLocaleString()}</div>
+                    <div class="rec-jpy">¥ ${it.jpy.toLocaleString()}</div>
+                  </div>
+                  <button class="btn-sm" style="color:#A19B91; border:none; background:none;" onclick="removeRecord(${it.id})">✕</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      box.innerHTML = html;
+    }
+
+    function renderCloudView() {
+      document.getElementById('cloud-link-drive').href = cloudData.driveUrl;
+      document.getElementById('cloud-link-photo').href = cloudData.photoUrl;
+    }
+
+    function editCloudLink(type) {
+      document.getElementById('edit-cloud-type').value = type;
+      const input = document.getElementById('cloud-input-url');
+      document.getElementById('cloud-modal-title').innerText = type === 'drive' ? '設定旅行資料庫網址' : '設定共享相簿網址';
+      input.value = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
+      document.getElementById('cloudModal').classList.add('active');
+    }
+
+    function saveCloudLink() {
+      const type = document.getElementById('edit-cloud-type').value;
+      let url = document.getElementById('cloud-input-url').value.trim();
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      if (type === 'drive') cloudData.driveUrl = url;
+      else cloudData.photoUrl = url;
+      localStorage.setItem('fk_cloud_data', JSON.stringify(cloudData));
+      closeCloudModal();
       renderCloudView();
-    });
+    }
+
+    function closeCloudModal() { document.getElementById('cloudModal').classList.remove('active'); }
+
+    function copyCloudLink(type) {
+      const url = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
+      copyText(url);
+    }
+
+    let toastTimeout = null;
+    function showSpeechToast() {
+      const toast = document.getElementById('speech-toast');
+      if (!toast) return;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
+    function triggerSpeech(text) {
+      if (!text) return;
+      if (!('speechSynthesis' in window)) {
+        alert('您的手機瀏覽器不支援語音播放功能！');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 0.9;
+
+      if (!synthVoices.length) {
+        synthVoices = window.speechSynthesis.getVoices();
+      }
+      const jaVoice = synthVoices.find(v => v.lang === 'ja-JP' || v.lang.includes('ja') || v.lang.includes('JP'));
+      if (jaVoice) utterance.voice = jaVoice;
+
+      window.speechSynthesis.speak(utterance);
+      showSpeechToast();
+    }
+
+    function pickPhraseCat(c, el) {
+      activePhraseCat = c;
+      document.querySelectorAll('.phrase-cat-pill').forEach(p => p.classList.remove('active'));
+      if (el) el.classList.add('active');
+      renderPhrases();
+    }
+
+    function renderPhrases() {
+      const list = phraseDatabase[activePhraseCat] || [];
+      document.getElementById('phrase-list-container').innerHTML = list.map(it => `
+        <div class="phrase-card" onclick="openBigModal('${it.ja}', '${it.zh}')">
+          <div>
+            <div style="font-size:0.84rem; font-weight:600;">${it.zh}</div>
+            <div style="font-size:0.76rem; color:var(--autumn-amber); font-weight:500;">${it.ja}</div>
+          </div>
+          <span>🔍</span>
+        </div>
+      `).join('');
+    }
+
+    async function performTranslation() {
+      const txt = document.getElementById('trans-input').value.trim();
+      if (!txt) return;
+      const btn = document.getElementById('btn-do-trans');
+      btn.innerText = '翻譯中...';
+      try {
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ja&dt=t&q=${encodeURIComponent(txt)}`);
+        const d = await res.json();
+        currentTranslatedJa = d[0].map(x => x[0]).join('');
+        currentInputZh = txt;
+        document.getElementById('trans-ja-result').innerText = currentTranslatedJa;
+        document.getElementById('trans-result-box').style.display = 'block';
+      } catch (e) {
+        alert('翻譯網路連線忙碌，請稍後再試！');
+      } finally {
+        btn.innerText = '翻譯為日文';
+      }
+    }
+
+    function speakCurrentText() { triggerSpeech(currentTranslatedJa); }
+    function showBigModalCurrent() { openBigModal(currentTranslatedJa, currentInputZh); }
+
+    function openBigModal(ja, zh) {
+      document.getElementById('modal-ja').innerText = ja;
+      document.getElementById('modal-zh').innerText = zh;
+      document.getElementById('bigModal').classList.add('active');
+      triggerSpeech(ja);
+    }
+    function closeBigModal() { 
+      document.getElementById('bigModal').classList.remove('active'); 
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    function copyText(txt) {
+      if (!txt) return;
+      navigator.clipboard.writeText(txt).then(() => alert(`已複製：${txt}`)).catch(() => {
+        const t = document.createElement("textarea");
+        t.value = txt;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+        alert(`已複製：${txt}`);
+      });
+    }
+
+    async function exportStyledExcel() {
+      if (!records.length) return alert('無記帳資料');
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet('福岡旅費手帳');
+      ws.columns = [
+        { header: '日期', key: 'd', width: 14 },
+        { header: '項目', key: 'n', width: 26 },
+        { header: '分類', key: 'c', width: 14 },
+        { header: '支付方式', key: 'p', width: 14 },
+        { header: '台幣(TWD)', key: 't', width: 16 },
+        { header: '日圓(JPY)', key: 'j', width: 16 }
+      ];
+      records.forEach(r => ws.addRow({ d: r.displayDate, n: r.name, c: r.type, p: r.pay, t: r.twd, j: r.jpy }));
+      const buf = await wb.xlsx.writeBuffer();
+      saveAs(new Blob([buf]), `福岡散策_記帳_${new Date().toISOString().split('T')[0]}.xlsx`);
+    }
+
+    async function exportHandmadePDF() {
+      if (!records.length) return alert('無記帳資料');
+      const area = document.getElementById('pdf-render-area');
+      area.style.display = 'block';
+      let tot = 0;
+      records.forEach(r => tot += r.twd);
+      area.innerHTML = `
+        <h2 style="text-align:center; font-weight:700;">福岡秋日散策 ． 旅費手帳</h2>
+        <div style="text-align:center; font-size:12px; margin-bottom:14px;">總支出：NT$ ${tot.toLocaleString()} (基準匯率: ${rate})</div>
+        <table style="width:100%; border-collapse:collapse; font-size:11px;">
+          <tr style="background:#EFECE6;"><th style="padding:4px;">日期</th><th>項目</th><th>分類</th><th>金額(TWD)</th></tr>
+          ${records.map(r => `<tr><td style="padding:4px; text-align:center;">${r.displayDate}</td><td>${r.name}</td><td style="text-align:center;">${r.type}</td><td style="text-align:right;">NT$ ${r.twd.toLocaleString()}</td></tr>`).join('')}
+        </table>
+      `;
+      await html2pdf().from(area).save(`福岡記帳報表.pdf`);
+      area.style.display = 'none';
+    }
+
+    drawPlans();
+    drawRecords();
+    renderPhrases();
   </script>
 </body>
 </html>
