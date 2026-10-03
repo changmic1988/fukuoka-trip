@@ -3,8 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- iPhone 原生 App 專屬名牌設定 -->
+  <meta name="apple-mobile-web-app-title" content="福岡散策">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23A34E2A'/%3E%3Ctext x='90' y='118' font-size='82' text-anchor='middle' fill='%23FAF8F5' font-family='-apple-system, sans-serif'%3E%F0%9F%8D%81%3C/text%3E%3C/svg%3E">
+
   <title>秋の福岡散策手帖 ｜ 5 Days Travel Note</title>
 
   <!-- 匯出專用函式庫 -->
@@ -12,7 +19,7 @@
   <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-  <!-- Firebase 官方 SDK (compat 版，單一 HTML 零編譯環境最穩) -->
+  <!-- Firebase 官方 SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -920,7 +927,6 @@
 </head>
 <body>
 
-  <!-- 封面 Header 附雲端同步狀態標籤 -->
   <header>
     <div class="mag-issue-bar">
       <div class="mag-issue">Travel Note 01 ｜ Autumn Leaves</div>
@@ -933,7 +939,6 @@
     </div>
   </header>
 
-  <!-- 六欄切換導航 -->
   <nav>
     <button class="active" onclick="switchTab('itinerary', this)">日程編排 ． Plan</button>
     <button onclick="switchTab('wallet', this)">憑證收納 ． Wallet</button>
@@ -953,11 +958,10 @@
       <div class="day-pill" onclick="pickDay(5)">Day 5 ． 歸途漫步</div>
     </div>
 
-    <!-- 即時氣候與時鐘 -->
     <div class="weather-widget">
       <div class="weather-head">
         <div class="weather-city">
-          <span class="weather-icon" id="wt-icon">🌤️</span>
+          <span class="weather-icon" id="wt-icon">🌤</span>
           <div>
             <div class="weather-temp" id="wt-temp">--°C</div>
             <div class="weather-sub" id="wt-range">最高 --° ｜ 最低 --°</div>
@@ -975,7 +979,6 @@
       </div>
     </div>
 
-    <!-- 路線圖折疊 -->
     <div class="transit-accordion">
       <button class="transit-accordion-btn" onclick="toggleTransitMap()">
         <span>🚇 福岡地下鐵 ＆ 西鐵全線路網圖</span>
@@ -997,7 +1000,6 @@
       </div>
     </div>
 
-    <!-- 行程卡片容器 -->
     <div class="itinerary-list" id="plan-container"></div>
 
     <div class="itinerary-mgr-bar">
@@ -1464,45 +1466,9 @@
 
   <div id="pdf-render-area"></div>
 
+  <!-- 核心單一腳本區塊：確保載入順序絕對安全 -->
   <script>
-    // ====== 1. 初始化 Firebase 即時資料庫 ======
-    const firebaseConfig = {
-      apiKey: "AIzaSyCeeuk-Fd7MY5huWeHH1HjnW4h-zl1xXGQ",
-      authDomain: "fukuoka-data.firebaseapp.com",
-      databaseURL: "https://fukuoka-data-default-rtdb.firebaseio.com",
-      projectId: "fukuoka-data",
-      storageBucket: "fukuoka-data.firebasestorage.app",
-      messagingSenderId: "712334953348",
-      appId: "1:712334953348:web:3781cc4798ba13c493ebd1",
-      measurementId: "G-HM49KQ7GMX"
-    };
-
-    let rtdb = null;
-    let isFirebaseReady = false;
-
-    try {
-      firebase.initializeApp(firebaseConfig);
-      rtdb = firebase.database();
-      isFirebaseReady = true;
-
-      // 監聽連線狀態
-      const connectedRef = rtdb.ref(".info/connected");
-      connectedRef.on("value", (snap) => {
-        const badge = document.getElementById("firebase-sync-status");
-        if (snap.val() === true) {
-          badge.className = "sync-status-badge";
-          badge.innerText = "🟢 雲端同步中";
-        } else {
-          badge.className = "sync-status-badge offline";
-          badge.innerText = "🟡 離線暫存中";
-        }
-      });
-    } catch (e) {
-      console.warn("Firebase 初始化異常，平滑切換本機離線模式", e);
-      document.getElementById("firebase-sync-status").innerText = "🟡 離線模式";
-    }
-
-    // ====== 2. 預設資料庫架構 ======
+    // 1. 預設資料庫宣告
     const defaultItinerary = {
       1: [
         { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", transit: "✈️ 桃園 TPE ➔ 福岡 FUK", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，通關入境、提領大件行李。" },
@@ -1524,7 +1490,7 @@
         { time: "11:30 – 12:00", title: "西新站搭地鐵空港線直達「大濠公園站」", transit: "🟠 空港線 [K04 西新駅] ➔ [K06 大濠公園駅]", mapQuery: "大濠公園駅", note: "由福岡塔散步回西新站，搭乘地下鐵空港線直達大濠公園站（僅 2 站約 3 分鐘）。" },
         { time: "12:00 – 13:15", title: "【午餐時段】大濠公園水岸景觀餐廳", transit: "大濠公園 湖畔周邊", mapQuery: "大濠公園 レストラン", note: "大濠公園水岸景觀餐廳周邊自由用餐，享受湖畔愜意風光。" },
         { time: "13:15 – 14:15", title: "大濠公園湖畔 ＆ 舞鶴公園福岡城天守台", transit: "大濠公園 ➔ 舞鶴公園天守台跡", mapQuery: "福岡城 潮見櫓 天守台跡", note: "湖畔悠閒散步，順走至舞鶴公園登上福岡城天守台跡，遠眺市區開闊天際線。" },
-        { time: "14:15 – 17:00", title: "地鐵至天神／赤坂 ➔ 「藥院」生活街區散策", transit: "🟠 空港線 [K06 大濠公園] ➔ [K07 赤坂/K08 天神]", mapQuery: "薬院 カフェ", note: "搭地鐵 1 站後散步前往藥院生活街區，逛選物生活雜貨、品嚐法式舒芙蕾手作下午茶。" },
+        { time: "14:15 – 17:00", title: "地鐵至天神／赤坂 ➔ 「藥院」生活街區散策", transit: "🟠 空港線 [K06 大濠公園] ➔ [K07 赤坂/K08 天神]", mapQuery: "藥院 カフェ", note: "搭地鐵 1 站後散步前往藥院生活街區，逛選物生活雜貨、品嚐法式舒芙蕾手作下午茶。" },
         { time: "17:00 – 18:30", title: "天神大名潮流街區 ＆ 警固神社足湯", transit: "天神站步行 5 分鐘", mapQuery: "警固神社 足湯", note: "漫步大名潮流店鋪，走進警固神社享受免費天然溫泉足湯，舒緩今日雙腳疲憊。" },
         { time: "18:30 – 20:00", title: "【晚餐時段】天神／今泉商圈在地料理", transit: "天神今泉商圈居酒屋", mapQuery: "天神 もつ鍋", note: "商圈周邊享用在地名物料理（如博多牛腸鍋或特色炙烤居酒屋）。" },
         { time: "20:00 之後", title: "天神站搭地鐵直達博多站，回飯店休息", transit: "🟠 空港線 [K08 天神駅] ➔ [K11 博多駅]", mapQuery: "Smile Hotel Hakata Ekimae", note: "天神站搭地鐵空港線（3 站直達）回博多站，散步 4 分鐘回微笑飯店休息。" }
@@ -1587,6 +1553,7 @@
       ]
     };
 
+    // 2. 核心變數初始化
     let activeDay = 1;
     let liveFetchedRate = 0.2150;
     let rate = 0.2150;
@@ -1613,9 +1580,41 @@
     let currentInputZh = "";
     let activePhraseCat = 'dining';
 
-    // ====== 3. 雙向即時雲端監聽器 (Realtime Listeners) ======
-    if (isFirebaseReady) {
-      // 監聽行程
+    // 3. Firebase 初始化與即時監聽
+    let rtdb = null;
+    let isFirebaseReady = false;
+
+    try {
+      const firebaseConfig = {
+        apiKey: "AIzaSyCeeuk-Fd7MY5huWeHH1HjnW4h-zl1xXGQ",
+        authDomain: "fukuoka-data.firebaseapp.com",
+        databaseURL: "https://fukuoka-data-default-rtdb.firebaseio.com",
+        projectId: "fukuoka-data",
+        storageBucket: "fukuoka-data.firebasestorage.app",
+        messagingSenderId: "712334953348",
+        appId: "1:712334953348:web:3781cc4798ba13c493ebd1",
+        measurementId: "G-HM49KQ7GMX"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      rtdb = firebase.database();
+      isFirebaseReady = true;
+
+      // 連線狀態監聽
+      rtdb.ref(".info/connected").on("value", (snap) => {
+        const badge = document.getElementById("firebase-sync-status");
+        if (badge) {
+          if (snap.val() === true) {
+            badge.className = "sync-status-badge";
+            badge.innerText = "🟢 雲端同步中";
+          } else {
+            badge.className = "sync-status-badge offline";
+            badge.innerText = "🟡 離線暫存中";
+          }
+        }
+      });
+
+      // 監聽雲端行程更新
       rtdb.ref("fukuoka_trip/itinerary").on("value", (snapshot) => {
         const cloudDataVal = snapshot.val();
         if (cloudDataVal) {
@@ -1625,7 +1624,7 @@
         }
       });
 
-      // 監聽行程打勾完成狀態
+      // 監聽行程完成狀態
       rtdb.ref("fukuoka_trip/completed").on("value", (snapshot) => {
         const cloudDone = snapshot.val();
         if (cloudDone) {
@@ -1635,7 +1634,7 @@
         }
       });
 
-      // 監聽記帳記錄
+      // 監聽記帳記錄更新
       rtdb.ref("fukuoka_trip/records").on("value", (snapshot) => {
         const cloudRecs = snapshot.val();
         if (cloudRecs) {
@@ -1644,9 +1643,12 @@
           drawRecords();
         }
       });
+    } catch (e) {
+      console.warn("Firebase 初始化失敗，使用離線模式", e);
+      const badge = document.getElementById("firebase-sync-status");
+      if (badge) badge.innerText = "🟡 離線模式";
     }
 
-    // 雲端同步輔助函式
     function syncItineraryToCloud() {
       localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
       if (isFirebaseReady) rtdb.ref("fukuoka_trip/itinerary").set(customItinerary);
@@ -1662,152 +1664,7 @@
       if (isFirebaseReady) rtdb.ref("fukuoka_trip/records").set(records);
     }
 
-    // 語音引擎初始化
-    let synthVoices = [];
-    function initSpeechEngine() {
-      if ('speechSynthesis' in window) {
-        synthVoices = window.speechSynthesis.getVoices();
-        window.speechSynthesis.onvoiceschanged = () => {
-          synthVoices = window.speechSynthesis.getVoices();
-        };
-      }
-    }
-    initSpeechEngine();
-
-    const today = new Date();
-    document.getElementById('k-date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-
-    // 取得當日即時匯率
-    async function fetchLiveExchangeRate() {
-      try {
-        const res = await fetch('https://open.er-api.com/v6/latest/JPY');
-        const data = await res.json();
-        if (data && data.rates && data.rates.TWD) {
-          liveFetchedRate = data.rates.TWD;
-          document.getElementById('live-api-rate').innerText = `1 JPY ≈ ${liveFetchedRate.toFixed(4)} TWD`;
-          
-          const savedCustom = localStorage.getItem('fk_custom_rate');
-          if (savedCustom) {
-            rate = parseFloat(savedCustom);
-          } else {
-            rate = liveFetchedRate;
-          }
-          applyRateDisplay();
-        }
-      } catch (e) {
-        liveFetchedRate = 0.2150;
-        document.getElementById('live-api-rate').innerText = `1 JPY ≈ 0.2150 TWD (離線基準)`;
-        rate = parseFloat(localStorage.getItem('fk_custom_rate')) || 0.2150;
-        applyRateDisplay();
-      }
-    }
-
-    function applyRateDisplay() {
-      document.getElementById('user-custom-rate').value = rate.toFixed(4);
-      document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
-      runTaxCalc();
-      drawRecords();
-    }
-
-    function updateCustomRate(val) {
-      const parsed = parseFloat(val);
-      if (!isNaN(parsed) && parsed > 0) {
-        rate = parsed;
-        localStorage.setItem('fk_custom_rate', rate);
-        applyRateDisplay();
-      }
-    }
-
-    function resetToLiveRate() {
-      rate = liveFetchedRate;
-      localStorage.removeItem('fk_custom_rate');
-      applyRateDisplay();
-    }
-
-    fetchLiveExchangeRate();
-
-    // 時鐘
-    function updateFukuokaClock() {
-      const clockEl = document.getElementById('live-clock');
-      if (!clockEl) return;
-      const now = new Date();
-      const formatter = new Intl.DateTimeFormat('zh-TW', {
-        timeZone: 'Asia/Tokyo',
-        month: 'numeric', day: 'numeric', weekday: 'short',
-        hour: '2-digit', minute: '2-digit', hour12: false
-      });
-      const parts = formatter.formatToParts(now);
-      let m='', d='', wd='', hr='', min='';
-      parts.forEach(p => {
-        if (p.type === 'month') m = p.value;
-        if (p.type === 'day') d = p.value;
-        if (p.type === 'weekday') wd = p.value;
-        if (p.type === 'hour') hr = p.value;
-        if (p.type === 'minute') min = p.value;
-      });
-      clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
-    }
-    updateFukuokaClock();
-    setInterval(updateFukuokaClock, 1000);
-
-    // 天氣
-    async function fetchWeather() {
-      try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
-        const data = await res.json();
-        const curr = Math.round(data.current.temperature_2m);
-        const max = Math.round(data.daily.temperature_2m_max[0]);
-        const min = Math.round(data.daily.temperature_2m_min[0]);
-        const rain = data.daily.precipitation_probability_max[0] || 0;
-        document.getElementById('wt-temp').innerText = `${curr}°C`;
-        document.getElementById('wt-range').innerText = `最高 ${max}° ｜ 最低 ${min}°`;
-        document.getElementById('wt-rain').innerText = `💧 降雨機率 ${rain}%`;
-        document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
-        document.getElementById('outfit-badges').innerHTML = `
-          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${min < 18 ? '薄風衣 / 開襟針織' : '輕夾克'}</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">透氣棉T / 長袖襯衫</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rain >= 30 ? '摺疊傘 ． 備用' : '防曬墨鏡 ． 輕便'}</span></div></div>
-        `;
-      } catch (e) {
-        document.getElementById('wt-temp').innerText = '21°C';
-      }
-    }
-    fetchWeather();
-
-    function switchTab(tabId, el) {
-      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
-      if (el) el.classList.add('active');
-      document.getElementById(`${tabId}-view`).classList.add('active');
-      if (tabId === 'wallet') renderWalletView();
-      if (tabId === 'cloud') renderCloudView();
-      if (tabId === 'kakeibo') drawRecords();
-      if (tabId === 'translate') renderPhrases();
-    }
-
-    function pickDay(d) {
-      activeDay = d;
-      document.querySelectorAll('.day-pill').forEach((p, idx) => p.classList.toggle('active', idx + 1 === d));
-      drawPlans();
-    }
-
-    function toggleTransitMap() {
-      const c = document.getElementById('transit-content');
-      c.classList.toggle('active');
-      document.getElementById('transit-arrow').innerText = c.classList.contains('active') ? '▲ 收起' : '▼ 展開';
-    }
-
-    function handleMetroImgError(img) {
-      img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Fukuoka_city_subway_map_JA_2023.png/1280px-Fukuoka_city_subway_map_JA_2023.png";
-    }
-
-    function openImageModal(src) {
-      document.getElementById('imgModalSrc').src = src;
-      document.getElementById('imgModal').classList.add('active');
-    }
-    function closeImageModal() { document.getElementById('imgModal').classList.remove('active'); }
-
+    // 4. 行程介面邏輯
     function parseTimeToMinutes(t) {
       if (!t) return 9999;
       const m = t.match(/(\d{1,2}):(\d{2})/);
@@ -1816,6 +1673,7 @@
 
     function drawPlans() {
       const box = document.getElementById('plan-container');
+      if (!box) return;
       const list = customItinerary[activeDay] || [];
       box.innerHTML = list.map((p, idx) => {
         const tid = `day_${activeDay}_${idx}`;
@@ -1832,7 +1690,7 @@
               <span class="time-tag">${p.time}</span>
               <div class="plan-actions">
                 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.mapQuery || p.title)}" target="_blank" rel="noopener noreferrer" class="btn-map">📍 導航</a>
-                <button class="btn-sm" onclick="editPlanItem(${idx})">✏️</button>
+                <button class="btn-sm" onclick="editPlanItem(${idx})">✏️️</button>
                 <button class="btn-sm" style="color:#A19B91;" onclick="deletePlanItem(${idx})">🗑️</button>
                 <div class="drag-handle">⠿</div>
                 <button class="btn-check" onclick="togglePlan('${tid}')">✓</button>
@@ -1855,6 +1713,7 @@
 
     function initTouchDrag() {
       const container = document.getElementById('plan-container');
+      if (!container) return;
       container.querySelectorAll('.drag-handle').forEach(handle => {
         let card = null, isDrag = false;
         handle.addEventListener('touchstart', (e) => {
@@ -1953,6 +1812,43 @@
       }
     }
 
+    // 5. 分頁切換與其他模組
+    function switchTab(tabId, el) {
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+      if (el) el.classList.add('active');
+      const target = document.getElementById(`${tabId}-view`);
+      if (target) target.classList.add('active');
+      if (tabId === 'wallet') renderWalletView();
+      if (tabId === 'cloud') renderCloudView();
+      if (tabId === 'kakeibo') drawRecords();
+      if (tabId === 'translate') renderPhrases();
+    }
+
+    function pickDay(d) {
+      activeDay = d;
+      document.querySelectorAll('.day-pill').forEach((p, idx) => p.classList.toggle('active', idx + 1 === d));
+      drawPlans();
+    }
+
+    function toggleTransitMap() {
+      const c = document.getElementById('transit-content');
+      if (!c) return;
+      c.classList.toggle('active');
+      document.getElementById('transit-arrow').innerText = c.classList.contains('active') ? '▲ 收起' : '▼ 展開';
+    }
+
+    function handleMetroImgError(img) {
+      img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Fukuoka_city_subway_map_JA_2023.png/1280px-Fukuoka_city_subway_map_JA_2023.png";
+    }
+
+    function openImageModal(src) {
+      document.getElementById('imgModalSrc').src = src;
+      document.getElementById('imgModal').classList.add('active');
+    }
+    function closeImageModal() { document.getElementById('imgModal').classList.remove('active'); }
+
+    // 6. 憑證與雲端硬碟
     function renderWalletView() {
       document.getElementById('w-flight-pnr').innerText = walletData.flightPnr || 'EJABM6';
       document.getElementById('w-hotel-confirm').innerText = walletData.hotelConfirm || 'RYa0ngw55e';
@@ -1993,6 +1889,40 @@
 
     function closeWalletModal() { document.getElementById('walletModal').classList.remove('active'); }
 
+    function renderCloudView() {
+      document.getElementById('cloud-link-drive').href = cloudData.driveUrl;
+      document.getElementById('cloud-link-photo').href = cloudData.photoUrl;
+    }
+
+    function editCloudLink(type) {
+      document.getElementById('edit-cloud-type').value = type;
+      const input = document.getElementById('cloud-input-url');
+      document.getElementById('cloud-modal-title').innerText = type === 'drive' ? '設定旅行資料庫網址' : '設定共享相簿網址';
+      input.value = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
+      document.getElementById('cloudModal').classList.add('active');
+    }
+
+    function saveCloudLink() {
+      const type = document.getElementById('edit-cloud-type').value;
+      let url = document.getElementById('cloud-input-url').value.trim();
+      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
+      if (type === 'drive') cloudData.driveUrl = url;
+      else cloudData.photoUrl = url;
+      localStorage.setItem('fk_cloud_data', JSON.stringify(cloudData));
+      closeCloudModal();
+      renderCloudView();
+    }
+
+    function closeCloudModal() { document.getElementById('cloudModal').classList.remove('active'); }
+
+    function copyCloudLink(type) {
+      const url = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
+      copyText(url);
+    }
+
+    // 7. 記帳與退稅計算機
     function setTaxMode(m) {
       taxMode = m;
       document.getElementById('btn-tax-ex').classList.toggle('active', m === 'ex');
@@ -2112,6 +2042,7 @@
       document.getElementById('sum-jpy').innerText = `¥ ${totJpy.toLocaleString()}`;
 
       const box = document.getElementById('kakeibo-records-box');
+      if (!box) return;
       if (records.length === 0) {
         box.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px; font-size:0.8rem;">尚無記帳記錄</div>`;
         return;
@@ -2155,37 +2086,106 @@
       box.innerHTML = html;
     }
 
-    function renderCloudView() {
-      document.getElementById('cloud-link-drive').href = cloudData.driveUrl;
-      document.getElementById('cloud-link-photo').href = cloudData.photoUrl;
-    }
-
-    function editCloudLink(type) {
-      document.getElementById('edit-cloud-type').value = type;
-      const input = document.getElementById('cloud-input-url');
-      document.getElementById('cloud-modal-title').innerText = type === 'drive' ? '設定旅行資料庫網址' : '設定共享相簿網址';
-      input.value = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
-      document.getElementById('cloudModal').classList.add('active');
-    }
-
-    function saveCloudLink() {
-      const type = document.getElementById('edit-cloud-type').value;
-      let url = document.getElementById('cloud-input-url').value.trim();
-      if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
+    // 8. 匯率與天氣
+    async function fetchLiveExchangeRate() {
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/JPY');
+        const data = await res.json();
+        if (data && data.rates && data.rates.TWD) {
+          liveFetchedRate = data.rates.TWD;
+          document.getElementById('live-api-rate').innerText = `1 JPY ≈ ${liveFetchedRate.toFixed(4)} TWD`;
+          
+          const savedCustom = localStorage.getItem('fk_custom_rate');
+          if (savedCustom) {
+            rate = parseFloat(savedCustom);
+          } else {
+            rate = liveFetchedRate;
+          }
+          applyRateDisplay();
+        }
+      } catch (e) {
+        liveFetchedRate = 0.2150;
+        document.getElementById('live-api-rate').innerText = `1 JPY ≈ 0.2150 TWD (離線基準)`;
+        rate = parseFloat(localStorage.getItem('fk_custom_rate')) || 0.2150;
+        applyRateDisplay();
       }
-      if (type === 'drive') cloudData.driveUrl = url;
-      else cloudData.photoUrl = url;
-      localStorage.setItem('fk_cloud_data', JSON.stringify(cloudData));
-      closeCloudModal();
-      renderCloudView();
     }
 
-    function closeCloudModal() { document.getElementById('cloudModal').classList.remove('active'); }
+    function applyRateDisplay() {
+      document.getElementById('user-custom-rate').value = rate.toFixed(4);
+      document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
+      runTaxCalc();
+      drawRecords();
+    }
 
-    function copyCloudLink(type) {
-      const url = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
-      copyText(url);
+    function updateCustomRate(val) {
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed) && parsed > 0) {
+        rate = parsed;
+        localStorage.setItem('fk_custom_rate', rate);
+        applyRateDisplay();
+      }
+    }
+
+    function resetToLiveRate() {
+      rate = liveFetchedRate;
+      localStorage.removeItem('fk_custom_rate');
+      applyRateDisplay();
+    }
+
+    function updateFukuokaClock() {
+      const clockEl = document.getElementById('live-clock');
+      if (!clockEl) return;
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('zh-TW', {
+        timeZone: 'Asia/Tokyo',
+        month: 'numeric', day: 'numeric', weekday: 'short',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      });
+      const parts = formatter.formatToParts(now);
+      let m='', d='', wd='', hr='', min='';
+      parts.forEach(p => {
+        if (p.type === 'month') m = p.value;
+        if (p.type === 'day') d = p.value;
+        if (p.type === 'weekday') wd = p.value;
+        if (p.type === 'hour') hr = p.value;
+        if (p.type === 'minute') min = p.value;
+      });
+      clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
+    }
+
+    async function fetchWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
+        const data = await res.json();
+        const curr = Math.round(data.current.temperature_2m);
+        const max = Math.round(data.daily.temperature_2m_max[0]);
+        const min = Math.round(data.daily.temperature_2m_min[0]);
+        const rain = data.daily.precipitation_probability_max[0] || 0;
+        document.getElementById('wt-temp').innerText = `${curr}°C`;
+        document.getElementById('wt-range').innerText = `最高 ${max}° ｜ 最低 ${min}°`;
+        document.getElementById('wt-rain').innerText = `💧 降雨機率 ${rain}%`;
+        document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
+        document.getElementById('outfit-badges').innerHTML = `
+          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${min < 18 ? '薄風衣 / 開襟針織' : '輕夾克'}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">透氣棉T / 長袖襯衫</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rain >= 30 ? '摺疊傘 ． 備用' : '防曬墨鏡 ． 輕便'}</span></div></div>
+        `;
+      } catch (e) {
+        document.getElementById('wt-temp').innerText = '21°C';
+      }
+    }
+
+    // 9. 翻譯與語音
+    let synthVoices = [];
+    function initSpeechEngine() {
+      if ('speechSynthesis' in window) {
+        synthVoices = window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          synthVoices = window.speechSynthesis.getVoices();
+        };
+      }
     }
 
     let toastTimeout = null;
@@ -2207,7 +2207,6 @@
       }
 
       window.speechSynthesis.cancel();
-
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
       utterance.rate = 0.9;
@@ -2231,7 +2230,9 @@
 
     function renderPhrases() {
       const list = phraseDatabase[activePhraseCat] || [];
-      document.getElementById('phrase-list-container').innerHTML = list.map(it => `
+      const box = document.getElementById('phrase-list-container');
+      if (!box) return;
+      box.innerHTML = list.map(it => `
         <div class="phrase-card" onclick="openBigModal('${it.ja}', '${it.zh}')">
           <div>
             <div style="font-size:0.84rem; font-weight:600;">${it.zh}</div>
@@ -2323,9 +2324,27 @@
       area.style.display = 'none';
     }
 
-    drawPlans();
-    drawRecords();
-    renderPhrases();
+    // 10. 立即無條件啟動渲染（保證開機即顯示）
+    function initApp() {
+      drawPlans();
+      drawRecords();
+      renderPhrases();
+      renderWalletView();
+      renderCloudView();
+      fetchLiveExchangeRate();
+      fetchWeather();
+      initSpeechEngine();
+      updateFukuokaClock();
+      setInterval(updateFukuokaClock, 1000);
+    }
+
+    // 同步執行一次
+    initApp();
+
+    // 頁面就緒再補強一次
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    }
   </script>
 </body>
 </html>
