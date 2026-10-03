@@ -7,13 +7,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>秋の福岡散策手帖 ｜ 5 Days Travel Note</title>
 
-  <!-- 匯出專用函式庫：ExcelJS + FileSaver + html2pdf -->
+  <!-- 匯出專用函式庫 -->
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+  <!-- Firebase 官方 SDK (compat 版，單一 HTML 零編譯環境最穩) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
-    /* ====== 方案 B：Tokyo Modern UI 現代系統色階與字型 ====== */
     :root {
       --bg-canvas: #F8F6F2;
       --card-bg: #FFFFFF;
@@ -34,7 +37,6 @@
       --metro-nishitetsu: #6A1B9A;
       --rail-jr: #C62828;
 
-      /* Apple 現代原生字體家族 */
       --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang TC", "Hiragino Sans", "Helvetica Neue", sans-serif;
     }
 
@@ -61,11 +63,16 @@
       overflow-wrap: break-word;
     }
 
-    /* ====== 現代都會封面 Header ====== */
     header {
-      padding: calc(28px + env(safe-area-inset-top)) 20px 16px;
+      padding: calc(28px + env(safe-area-inset-top)) 20px 14px;
       background-color: var(--bg-canvas);
       border-bottom: 1px solid var(--border-soft);
+    }
+    .mag-issue-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
     }
     .mag-issue {
       font-size: 0.68rem;
@@ -73,7 +80,21 @@
       text-transform: uppercase;
       color: var(--autumn-amber);
       font-weight: 700;
-      margin-bottom: 4px;
+    }
+    .sync-status-badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: #E8F5E9;
+      color: var(--accent-green);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sync-status-badge.offline {
+      background: #FFF3E0;
+      color: #E65100;
     }
     header h1 {
       font-size: 1.55rem;
@@ -92,7 +113,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* ====== 六欄導航列 ====== */
     nav {
       display: flex;
       gap: 8px;
@@ -145,7 +165,7 @@
     .tab-view { display: none; }
     .tab-view.active { display: block; }
 
-    /* ====== TAB 1: 日程編排 ====== */
+    /* TAB 1: 日程編排 */
     .day-selector {
       display: flex;
       gap: 6px;
@@ -228,7 +248,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* 穿搭建議：解決窄螢幕字句被截斷與擠壓 */
     .outfit-guide { margin-top: 10px; }
     .outfit-title {
       font-size: 0.72rem;
@@ -251,33 +270,10 @@
       gap: 6px;
       min-width: 0;
     }
-    .outfit-emoji { 
-      font-size: 1rem; 
-      flex-shrink: 0; 
-      line-height: 1;
-    }
-    .outfit-text {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      flex: 1;
-    }
-    .outfit-cat { 
-      font-size: 0.62rem; 
-      color: var(--text-muted); 
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .outfit-val { 
-      font-size: 0.72rem; 
-      color: var(--text-main); 
-      font-weight: 600; 
-      line-height: 1.25;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    .outfit-emoji { font-size: 1rem; flex-shrink: 0; line-height: 1; }
+    .outfit-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+    .outfit-cat { font-size: 0.62rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .outfit-val { font-size: 0.72rem; color: var(--text-main); font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .transit-accordion {
       background: var(--card-bg);
@@ -318,7 +314,6 @@
       min-height: 130px;
     }
 
-    /* 行程清單卡片：徹底修復頂部 Meta 按鈕擠壓與標題換行 */
     .itinerary-list {
       display: flex;
       flex-direction: column;
@@ -476,7 +471,7 @@
       cursor: pointer;
     }
 
-    /* ====== TAB 2: 憑證收納 WALLET ====== */
+    /* TAB 2: 憑證收納 WALLET */
     .wallet-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -514,7 +509,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* ====== TAB 3: 旅費手帳 EXPENSE & 匯率/退稅試算 ====== */
+    /* TAB 3: 旅費手帳 EXPENSE */
     .rate-status-card {
       background: #FAF8F5;
       border: 1px solid var(--border-soft);
@@ -525,27 +520,10 @@
       justify-content: space-between;
       align-items: center;
     }
-    .rate-status-left {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .rate-status-title {
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-    .rate-status-val {
-      font-size: 0.98rem;
-      font-weight: 700;
-      color: var(--autumn-terracotta);
-      font-variant-numeric: tabular-nums;
-    }
-    .rate-status-right {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
+    .rate-status-left { display: flex; flex-direction: column; gap: 1px; }
+    .rate-status-title { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
+    .rate-status-val { font-size: 0.98rem; font-weight: 700; color: var(--autumn-terracotta); font-variant-numeric: tabular-nums; }
+    .rate-status-right { display: flex; align-items: center; gap: 5px; }
     .rate-status-input {
       width: 64px;
       padding: 4px 6px;
@@ -575,11 +553,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    .calc-seg {
-      display: flex;
-      gap: 5px;
-      margin-bottom: 8px;
-    }
+    .calc-seg { display: flex; gap: 5px; margin-bottom: 8px; }
     .calc-seg button {
       flex: 1;
       padding: 6px 4px;
@@ -683,7 +657,6 @@
       gap: 4px;
     }
 
-    /* ====== 記帳表單：徹底修復 iOS Safari 日期覆蓋幣別破版 ====== */
     .kakeibo-form, .trans-box {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -692,30 +665,15 @@
       margin-bottom: 14px;
     }
 
-    /* 關鍵 Grid 佈局：防擠壓、防覆蓋 */
     .f-row-grid-date {
       display: grid;
       grid-template-columns: 1fr 100px;
       gap: 8px;
       margin-bottom: 8px;
     }
-    .f-row { 
-      display: flex; 
-      gap: 8px; 
-      margin-bottom: 8px; 
-    }
-    .f-group { 
-      flex: 1; 
-      display: flex; 
-      flex-direction: column; 
-      gap: 3px; 
-      min-width: 0; 
-    }
-    .f-group label { 
-      font-size: 0.68rem; 
-      color: var(--text-muted); 
-      font-weight: 600;
-    }
+    .f-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .f-group { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .f-group label { font-size: 0.68rem; color: var(--text-muted); font-weight: 600; }
 
     input, select, textarea {
       width: 100%;
@@ -778,7 +736,7 @@
     .rec-twd { font-size: 0.88rem; font-weight: 700; font-variant-numeric: tabular-nums; }
     .rec-jpy { font-size: 0.68rem; color: var(--text-muted); text-align: right; font-variant-numeric: tabular-nums; }
 
-    /* ====== TAB 4: 雲端硬碟 CLOUD ====== */
+    /* TAB 4: 雲端硬碟 CLOUD */
     .cloud-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -801,11 +759,7 @@
       font-weight: 700;
       margin-top: 8px;
     }
-    .cloud-sec-actions {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-    }
+    .cloud-sec-actions { display: flex; gap: 6px; margin-top: 6px; }
     .btn-cloud-tool {
       flex: 1;
       background: var(--tag-bg);
@@ -819,7 +773,7 @@
       text-align: center;
     }
 
-    /* ====== TAB 5: 實用語 TRANSLATE ====== */
+    /* TAB 5: 實用語 TRANSLATE */
     .phrase-cat-nav {
       display: flex;
       gap: 5px;
@@ -851,7 +805,7 @@
       cursor: pointer;
     }
 
-    /* ====== TAB 6: 緊急應變 SOS ====== */
+    /* TAB 6: 緊急應變 SOS */
     .sos-call-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -966,9 +920,12 @@
 </head>
 <body>
 
-  <!-- 封面 Header -->
+  <!-- 封面 Header 附雲端同步狀態標籤 -->
   <header>
-    <div class="mag-issue">Travel Note 01 ｜ Autumn Leaves</div>
+    <div class="mag-issue-bar">
+      <div class="mag-issue">Travel Note 01 ｜ Autumn Leaves</div>
+      <div class="sync-status-badge" id="firebase-sync-status">🟢 雲端同步中</div>
+    </div>
     <h1>福岡秋日散策手帖</h1>
     <div class="mag-sub">
       <span>2026.10.16 – 10.20</span>
@@ -1135,7 +1092,7 @@
     </div>
   </main>
 
-  <!-- TAB 3: 旅費手帳 EXPENSE & 匯率/退稅試算 -->
+  <!-- TAB 3: 旅費手帳 EXPENSE -->
   <main id="kakeibo-view" class="tab-view">
     <div class="rate-status-card">
       <div class="rate-status-left">
@@ -1205,7 +1162,7 @@
       <button class="btn-export" onclick="exportHandmadePDF()">📄 匯出 PDF</button>
     </div>
 
-    <!-- 記帳表單：徹底修復 iOS Safari 日期覆蓋幣別破版 -->
+    <!-- 記帳表單 -->
     <div class="kakeibo-form">
       <div class="f-row-grid-date">
         <div class="f-group">
@@ -1266,7 +1223,7 @@
   <main id="cloud-view" class="tab-view">
     <div class="cloud-card">
       <div class="wallet-head">
-        <span class="wallet-title">☁️️ 旅行資料總備份庫</span>
+        <span class="wallet-title">☁️ 旅行資料總備份庫</span>
         <button class="btn-sm" onclick="editCloudLink('drive')">⚙️ 設定網址</button>
       </div>
       <p style="font-size:0.76rem; color:var(--text-muted); margin-bottom:8px;">
@@ -1508,6 +1465,44 @@
   <div id="pdf-render-area"></div>
 
   <script>
+    // ====== 1. 初始化 Firebase 即時資料庫 ======
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeeuk-Fd7MY5huWeHH1HjnW4h-zl1xXGQ",
+      authDomain: "fukuoka-data.firebaseapp.com",
+      databaseURL: "https://fukuoka-data-default-rtdb.firebaseio.com",
+      projectId: "fukuoka-data",
+      storageBucket: "fukuoka-data.firebasestorage.app",
+      messagingSenderId: "712334953348",
+      appId: "1:712334953348:web:3781cc4798ba13c493ebd1",
+      measurementId: "G-HM49KQ7GMX"
+    };
+
+    let rtdb = null;
+    let isFirebaseReady = false;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      rtdb = firebase.database();
+      isFirebaseReady = true;
+
+      // 監聽連線狀態
+      const connectedRef = rtdb.ref(".info/connected");
+      connectedRef.on("value", (snap) => {
+        const badge = document.getElementById("firebase-sync-status");
+        if (snap.val() === true) {
+          badge.className = "sync-status-badge";
+          badge.innerText = "🟢 雲端同步中";
+        } else {
+          badge.className = "sync-status-badge offline";
+          badge.innerText = "🟡 離線暫存中";
+        }
+      });
+    } catch (e) {
+      console.warn("Firebase 初始化異常，平滑切換本機離線模式", e);
+      document.getElementById("firebase-sync-status").innerText = "🟡 離線模式";
+    }
+
+    // ====== 2. 預設資料庫架構 ======
     const defaultItinerary = {
       1: [
         { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", transit: "✈️ 桃園 TPE ➔ 福岡 FUK", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，通關入境、提領大件行李。" },
@@ -1618,6 +1613,56 @@
     let currentInputZh = "";
     let activePhraseCat = 'dining';
 
+    // ====== 3. 雙向即時雲端監聽器 (Realtime Listeners) ======
+    if (isFirebaseReady) {
+      // 監聽行程
+      rtdb.ref("fukuoka_trip/itinerary").on("value", (snapshot) => {
+        const cloudDataVal = snapshot.val();
+        if (cloudDataVal) {
+          customItinerary = cloudDataVal;
+          localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+          drawPlans();
+        }
+      });
+
+      // 監聽行程打勾完成狀態
+      rtdb.ref("fukuoka_trip/completed").on("value", (snapshot) => {
+        const cloudDone = snapshot.val();
+        if (cloudDone) {
+          completed = cloudDone;
+          localStorage.setItem('fk_done_tasks', JSON.stringify(completed));
+          drawPlans();
+        }
+      });
+
+      // 監聽記帳記錄
+      rtdb.ref("fukuoka_trip/records").on("value", (snapshot) => {
+        const cloudRecs = snapshot.val();
+        if (cloudRecs) {
+          records = cloudRecs;
+          localStorage.setItem('fk_records', JSON.stringify(records));
+          drawRecords();
+        }
+      });
+    }
+
+    // 雲端同步輔助函式
+    function syncItineraryToCloud() {
+      localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+      if (isFirebaseReady) rtdb.ref("fukuoka_trip/itinerary").set(customItinerary);
+    }
+
+    function syncCompletedToCloud() {
+      localStorage.setItem('fk_done_tasks', JSON.stringify(completed));
+      if (isFirebaseReady) rtdb.ref("fukuoka_trip/completed").set(completed);
+    }
+
+    function syncRecordsToCloud() {
+      localStorage.setItem('fk_records', JSON.stringify(records));
+      if (isFirebaseReady) rtdb.ref("fukuoka_trip/records").set(records);
+    }
+
+    // 語音引擎初始化
     let synthVoices = [];
     function initSpeechEngine() {
       if ('speechSynthesis' in window) {
@@ -1632,6 +1677,7 @@
     const today = new Date();
     document.getElementById('k-date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
+    // 取得當日即時匯率
     async function fetchLiveExchangeRate() {
       try {
         const res = await fetch('https://open.er-api.com/v6/latest/JPY');
@@ -1680,6 +1726,7 @@
 
     fetchLiveExchangeRate();
 
+    // 時鐘
     function updateFukuokaClock() {
       const clockEl = document.getElementById('live-clock');
       if (!clockEl) return;
@@ -1703,6 +1750,7 @@
     updateFukuokaClock();
     setInterval(updateFukuokaClock, 1000);
 
+    // 天氣
     async function fetchWeather() {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
@@ -1801,7 +1849,7 @@
 
     function togglePlan(id) {
       completed[id] = !completed[id];
-      localStorage.setItem('fk_done_tasks', JSON.stringify(completed));
+      syncCompletedToCloud();
       drawPlans();
     }
 
@@ -1837,7 +1885,7 @@
             return customItinerary[activeDay][parseInt(c.getAttribute('data-index'), 10)];
           });
           customItinerary[activeDay] = reordered;
-          localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+          syncItineraryToCloud();
           drawPlans();
         };
         handle.addEventListener('touchend', endDrag);
@@ -1869,9 +1917,9 @@
     }
 
     function deletePlanItem(idx) {
-      if (confirm('確定刪除此行程？')) {
+      if (confirm('確定刪除此行程？（雙方手機將同步刪除）')) {
         customItinerary[activeDay].splice(idx, 1);
-        localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+        syncItineraryToCloud();
         drawPlans();
       }
     }
@@ -1892,7 +1940,7 @@
       else customItinerary[activeDay][idx] = item;
 
       customItinerary[activeDay].sort((a,b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
-      localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+      syncItineraryToCloud();
       closePlanModal();
       drawPlans();
     }
@@ -1900,7 +1948,7 @@
     function resetCurrentDayPlans() {
       if (confirm(`確定恢復 Day ${activeDay} 預設行程？`)) {
         customItinerary[activeDay] = JSON.parse(JSON.stringify(defaultItinerary[activeDay]));
-        localStorage.setItem('fk_custom_itinerary', JSON.stringify(customItinerary));
+        syncItineraryToCloud();
         drawPlans();
       }
     }
@@ -2042,7 +2090,7 @@
         displayDate, name, twd, jpy, type, pay
       });
       records.sort((a,b) => (b.rawDate || '').localeCompare(a.rawDate || ''));
-      localStorage.setItem('fk_records', JSON.stringify(records));
+      syncRecordsToCloud();
 
       document.getElementById('k-item').value = '';
       document.getElementById('k-amount').value = '';
@@ -2050,9 +2098,11 @@
     }
 
     function removeRecord(id) {
-      records = records.filter(r => r.id !== id);
-      localStorage.setItem('fk_records', JSON.stringify(records));
-      drawRecords();
+      if (confirm('確定刪除此筆記帳？（雙方手機將同步刪除）')) {
+        records = records.filter(r => r.id !== id);
+        syncRecordsToCloud();
+        drawRecords();
+      }
     }
 
     function drawRecords() {
