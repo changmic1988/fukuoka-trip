@@ -13,27 +13,29 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
+    /* ====== 方案 B：Tokyo Modern UI 現代系統色階與字型 ====== */
     :root {
-      --bg-canvas: #FAF8F5;
+      --bg-canvas: #F8F6F2;
       --card-bg: #FFFFFF;
-      --text-main: #342E2B;
-      --text-muted: #8A817C;
-      --autumn-amber: #C07A4B;
-      --autumn-terracotta: #8C5338;
-      --autumn-leaf: #E8DCCF;
-      --slate-blue: #3E515B;
-      --border-soft: #EDE6DE;
-      --tag-bg: #F3ECE2;
+      --text-main: #1D1D1F;
+      --text-sub: #48484A;
+      --text-muted: #86868B;
+      --autumn-amber: #D97736;
+      --autumn-terracotta: #A34E2A;
+      --slate-blue: #2C3E50;
+      --border-soft: #E5E1DA;
+      --border-subtle: #ECE8E1;
+      --tag-bg: #EFECE6;
       --accent-green: #2E7D32;
-      --accent-red: #B71C1C;
+      --accent-red: #D32F2F;
 
       --metro-kuko: #F57C00;
       --metro-nanakuma: #2E7D32;
       --metro-nishitetsu: #6A1B9A;
       --rail-jr: #C62828;
 
-      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Hiragino Sans", "Heiti TC", sans-serif;
-      --font-serif: "Songti TC", "Hiragino Mincho ProN", "YuMincho", Georgia, serif;
+      /* Apple 現代原生字體家族 */
+      --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang TC", "Hiragino Sans", "Helvetica Neue", sans-serif;
     }
 
     * { 
@@ -46,53 +48,55 @@
     html, body {
       width: 100%;
       overflow-x: hidden;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
     }
 
     body {
-      background-color: var(--bg-canvas);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      padding-bottom: calc(90px + env(safe-area-inset-bottom));
-      -webkit-font-smoothing: antialiased;
-      line-height: 1.6;
+      padding-bottom: calc(96px + env(safe-area-inset-bottom));
+      word-break: keep-all;
+      overflow-wrap: break-word;
     }
 
+    /* ====== 現代都會封面 Header ====== */
     header {
-      padding: calc(34px + env(safe-area-inset-top)) 20px 16px;
+      padding: calc(28px + env(safe-area-inset-top)) 20px 16px;
       background-color: var(--bg-canvas);
       border-bottom: 1px solid var(--border-soft);
     }
     .mag-issue {
-      font-family: var(--font-serif);
-      font-size: 0.7rem;
-      letter-spacing: 0.22em;
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--autumn-amber);
-      margin-bottom: 6px;
-      font-weight: 600;
+      font-weight: 700;
+      margin-bottom: 4px;
     }
     header h1 {
-      font-family: var(--font-serif);
-      font-size: 1.65rem;
+      font-size: 1.55rem;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: -0.01em;
       color: var(--text-main);
-      line-height: 1.3;
+      line-height: 1.25;
     }
     .mag-sub {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      margin-top: 8px;
+      margin-top: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      letter-spacing: 0.04em;
+      font-variant-numeric: tabular-nums;
     }
 
+    /* ====== 六欄導航列 ====== */
     nav {
       display: flex;
-      gap: 12px;
-      padding: 12px 16px 8px;
+      gap: 8px;
+      padding: 10px 16px 8px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
@@ -105,16 +109,18 @@
     nav::-webkit-scrollbar { display: none; }
     nav button {
       flex: 0 0 auto;
-      padding: 8px 12px;
+      padding: 7px 12px;
       border: none;
       background: none;
-      font-family: var(--font-serif);
-      font-size: 0.86rem;
-      letter-spacing: 0.05em;
+      font-family: var(--font-stack);
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
       color: var(--text-muted);
       cursor: pointer;
       position: relative;
-      transition: all 0.2s;
+      transition: color 0.2s ease;
+      font-weight: 500;
+      white-space: nowrap;
     }
     nav button.active {
       color: var(--autumn-terracotta);
@@ -124,14 +130,15 @@
       content: '';
       position: absolute;
       bottom: -8px;
-      left: 10%;
-      right: 10%;
+      left: 12%;
+      right: 12%;
       height: 2.5px;
+      border-radius: 2px;
       background-color: var(--autumn-terracotta);
     }
 
     main { 
-      padding: 16px; 
+      padding: 14px 16px; 
       max-width: 620px;
       margin: 0 auto;
     }
@@ -141,8 +148,8 @@
     /* ====== TAB 1: 日程編排 ====== */
     .day-selector {
       display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: 6px;
+      margin-bottom: 12px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
@@ -154,73 +161,81 @@
       border: 1px solid var(--border-soft);
       padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
+      font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
+      white-space: nowrap;
     }
     .day-pill.active {
       background: var(--autumn-terracotta);
       border-color: var(--autumn-terracotta);
       color: #FFF;
-      box-shadow: 0 2px 6px rgba(140, 83, 56, 0.2);
+      box-shadow: 0 2px 6px rgba(163, 78, 42, 0.2);
     }
 
     .weather-widget {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
     }
     .weather-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding-bottom: 10px;
-      border-bottom: 1px dashed var(--border-soft);
+      border-bottom: 1px dashed var(--border-subtle);
     }
     .weather-city {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .weather-icon { font-size: 1.8rem; }
+    .weather-icon { font-size: 1.7rem; flex-shrink: 0; }
     .weather-temp {
-      font-family: var(--font-serif);
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
     }
     .weather-sub {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
     }
     .live-clock-text {
-      font-family: var(--font-serif);
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       font-weight: 700;
       color: var(--slate-blue);
       text-align: right;
+      font-variant-numeric: tabular-nums;
     }
     .weather-status {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--autumn-amber);
       text-align: right;
+      margin-top: 1px;
     }
     .weather-rain {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
       text-align: right;
+      font-variant-numeric: tabular-nums;
     }
 
+    /* 穿搭建議：解決窄螢幕字句被截斷與擠壓 */
     .outfit-guide { margin-top: 10px; }
     .outfit-title {
       font-size: 0.72rem;
-      font-family: var(--font-serif);
-      color: var(--autumn-amber);
+      color: var(--slate-blue);
       margin-bottom: 6px;
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.04em;
     }
     .outfit-grid {
       display: grid;
@@ -229,41 +244,66 @@
     }
     .outfit-badge {
       background: var(--tag-bg);
-      border-radius: 4px;
+      border-radius: 6px;
       padding: 6px 8px;
       display: flex;
       align-items: center;
       gap: 6px;
+      min-width: 0;
     }
-    .outfit-emoji { font-size: 1rem; }
-    .outfit-cat { font-size: 0.65rem; color: var(--text-muted); }
-    .outfit-val { font-size: 0.74rem; color: var(--text-main); font-weight: 600; }
+    .outfit-emoji { 
+      font-size: 1rem; 
+      flex-shrink: 0; 
+      line-height: 1;
+    }
+    .outfit-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+    .outfit-cat { 
+      font-size: 0.62rem; 
+      color: var(--text-muted); 
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .outfit-val { 
+      font-size: 0.72rem; 
+      color: var(--text-main); 
+      font-weight: 600; 
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .transit-accordion {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      margin-bottom: 14px;
+      border-radius: 10px;
+      margin-bottom: 12px;
       overflow: hidden;
     }
     .transit-accordion-btn {
       width: 100%;
       background: none;
       border: none;
-      padding: 12px 14px;
+      padding: 11px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       cursor: pointer;
-      font-family: var(--font-serif);
-      font-size: 0.84rem;
+      font-family: var(--font-stack);
+      font-size: 0.8rem;
       color: var(--slate-blue);
       font-weight: 600;
     }
     .transit-accordion-content {
       display: none;
-      padding: 0 12px 14px;
-      border-top: 1px solid var(--border-soft);
+      padding: 0 12px 12px;
+      border-top: 1px solid var(--border-subtle);
       background: #FAF8F5;
     }
     .transit-accordion-content.active { display: block; }
@@ -271,29 +311,30 @@
       width: 100%;
       border-radius: 6px;
       border: 1px solid var(--border-soft);
-      margin-top: 10px;
+      margin-top: 8px;
       cursor: zoom-in;
       display: block;
       background: #FFF;
-      min-height: 140px;
+      min-height: 130px;
     }
 
+    /* 行程清單卡片：徹底修復頂部 Meta 按鈕擠壓與標題換行 */
     .itinerary-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .plan-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      padding: 14px;
-      box-shadow: 0 1px 4px rgba(52, 46, 43, 0.02);
-      transition: all 0.2s;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      transition: all 0.2s ease;
       position: relative;
     }
     .plan-card.done {
-      background: #F4EFEB;
+      background: #F3EFEA;
       opacity: 0.65;
     }
     .plan-card.done .plan-title {
@@ -301,10 +342,10 @@
       color: var(--text-muted);
     }
     .plan-card.dragging {
-      opacity: 0.9;
-      transform: scale(1.02);
+      opacity: 0.92;
+      transform: scale(1.015);
       border-color: var(--autumn-amber);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
       z-index: 10;
     }
     .plan-meta {
@@ -312,41 +353,52 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 6px;
+      gap: 8px;
     }
     .time-tag {
       font-size: 0.72rem;
-      font-family: var(--font-serif);
-      font-weight: 600;
+      font-weight: 700;
       color: var(--autumn-terracotta);
       background: var(--tag-bg);
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
     }
     .plan-actions {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
+      flex-shrink: 0;
     }
     .btn-map, .btn-sm {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      font-size: 0.72rem;
+      justify-content: center;
+      gap: 2px;
+      font-size: 0.7rem;
       color: var(--slate-blue);
       text-decoration: none;
       background: var(--tag-bg);
-      padding: 3px 8px;
+      padding: 3px 7px;
       border-radius: 4px;
       border: 1px solid var(--border-soft);
       cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+      min-height: 26px;
     }
     .drag-handle {
       touch-action: none;
       cursor: grab;
-      font-size: 1.1rem;
-      color: #B5A89E;
-      padding: 0 4px;
+      font-size: 1.05rem;
+      color: #A19B91;
+      padding: 0 2px;
       user-select: none;
+      display: flex;
+      align-items: center;
+      height: 26px;
     }
     .btn-check {
       background: none;
@@ -358,8 +410,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: transparent;
+      flex-shrink: 0;
     }
     .plan-card.done .btn-check {
       background: var(--accent-green);
@@ -367,35 +420,38 @@
       color: white;
     }
     .plan-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 4px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 5px;
+      line-height: 1.35;
     }
     .transit-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.72rem;
-      padding: 2px 8px;
+      gap: 5px;
+      font-size: 0.7rem;
+      padding: 2px 7px;
       border-radius: 4px;
       margin-bottom: 6px;
       background: #FAF8F5;
       border: 1px solid var(--border-soft);
+      font-weight: 600;
     }
     .transit-badge.kuko { border-left: 3.5px solid var(--metro-kuko); color: #B25900; }
     .transit-badge.nanakuma { border-left: 3.5px solid var(--metro-nanakuma); color: #1B5E20; }
     .transit-badge.nishitetsu { border-left: 3.5px solid var(--metro-nishitetsu); color: #4A148C; }
     .transit-badge.jr { border-left: 3.5px solid var(--rail-jr); color: #B71C1C; }
     .plan-note {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      line-height: 1.5;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      line-height: 1.45;
     }
 
     .itinerary-mgr-bar {
       display: flex;
       gap: 8px;
-      margin-top: 16px;
+      margin-top: 14px;
     }
     .btn-add-plan {
       flex: 2;
@@ -403,9 +459,9 @@
       color: white;
       border: none;
       padding: 10px;
-      border-radius: 6px;
-      font-size: 0.82rem;
-      font-weight: 600;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
       cursor: pointer;
     }
     .btn-reset-plan {
@@ -414,8 +470,9 @@
       color: var(--text-muted);
       border: 1px solid var(--border-soft);
       padding: 10px;
-      border-radius: 6px;
-      font-size: 0.76rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
     }
 
@@ -423,21 +480,20 @@
     .wallet-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 14px;
+      border-radius: 10px;
+      padding: 14px 15px;
+      margin-bottom: 12px;
     }
     .wallet-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       padding-bottom: 6px;
-      border-bottom: 1px dashed var(--border-soft);
+      border-bottom: 1px dashed var(--border-subtle);
     }
     .wallet-title {
-      font-family: var(--font-serif);
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 700;
       color: var(--slate-blue);
     }
@@ -445,8 +501,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      font-size: 0.82rem;
+      margin-bottom: 7px;
+      font-size: 0.8rem;
     }
     .wallet-item .lbl { color: var(--text-muted); }
     .wallet-item .val {
@@ -455,6 +511,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      font-variant-numeric: tabular-nums;
     }
 
     /* ====== TAB 3: 旅費手帳 EXPENSE & 匯率/退稅試算 ====== */
@@ -462,8 +519,8 @@
       background: #FAF8F5;
       border: 1px solid var(--border-soft);
       border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 12px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -471,49 +528,49 @@
     .rate-status-left {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 1px;
     }
     .rate-status-title {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
-      font-family: var(--font-serif);
+      font-weight: 600;
     }
     .rate-status-val {
-      font-family: var(--font-serif);
-      font-size: 1.05rem;
+      font-size: 0.98rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
+      font-variant-numeric: tabular-nums;
     }
     .rate-status-right {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
     }
     .rate-status-input {
-      width: 68px;
+      width: 64px;
       padding: 4px 6px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       text-align: center;
       border: 1px solid var(--border-soft);
       border-radius: 4px;
       background: #FFF;
-      font-family: var(--font-sans);
+      font-family: var(--font-stack);
+      font-variant-numeric: tabular-nums;
     }
 
     .tax-calc-card {
       background: #FFF;
       border: 1.5px solid var(--autumn-amber);
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(192, 122, 75, 0.08);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(217, 119, 54, 0.06);
     }
     .calc-head {
-      font-family: var(--font-serif);
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -528,16 +585,19 @@
       padding: 6px 4px;
       background: var(--tag-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 4px;
-      font-size: 0.74rem;
-      color: var(--text-muted);
+      border-radius: 5px;
+      font-size: 0.72rem;
+      color: var(--text-sub);
       cursor: pointer;
+      font-weight: 600;
+      white-space: nowrap;
+      min-height: 32px;
     }
     .calc-seg button.active {
       background: var(--autumn-amber);
       color: #FFF;
       border-color: var(--autumn-amber);
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .custom-rate-input-box {
@@ -546,39 +606,41 @@
       gap: 6px;
       background: var(--tag-bg);
       padding: 6px 10px;
-      border-radius: 4px;
+      border-radius: 5px;
       margin-bottom: 8px;
-      font-size: 0.74rem;
-      color: var(--text-muted);
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      font-weight: 600;
     }
     .custom-rate-input-box.active { display: flex; }
     .custom-rate-input-box input {
-      width: 60px;
+      width: 58px;
       padding: 3px 6px;
       font-size: 0.8rem;
       border: 1px solid var(--border-soft);
       border-radius: 4px;
       text-align: center;
       background: #FFF;
+      font-variant-numeric: tabular-nums;
     }
 
     .calc-res-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 6px;
       background: var(--bg-canvas);
       padding: 10px;
       border-radius: 6px;
-      margin-top: 10px;
+      margin-top: 8px;
       text-align: center;
     }
-    .calc-res-lbl { font-size: 0.68rem; color: var(--text-muted); }
-    .calc-res-twd { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--autumn-terracotta); }
-    .calc-res-jpy { font-size: 0.8rem; font-weight: 600; color: var(--slate-blue); }
+    .calc-res-lbl { font-size: 0.66rem; color: var(--text-muted); font-weight: 600; }
+    .calc-res-twd { font-size: 1.1rem; font-weight: 700; color: var(--autumn-terracotta); font-variant-numeric: tabular-nums; }
+    .calc-res-jpy { font-size: 0.78rem; font-weight: 600; color: var(--slate-blue); font-variant-numeric: tabular-nums; }
     .tax-badge-status {
       padding: 4px 8px;
       border-radius: 4px;
-      font-size: 0.74rem;
+      font-size: 0.72rem;
       text-align: center;
       margin-top: 8px;
       font-weight: 600;
@@ -590,29 +652,29 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .kakeibo-box {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
       border-radius: 8px;
-      padding: 12px;
+      padding: 10px 12px;
     }
-    .kakeibo-box .lbl { font-size: 0.68rem; color: var(--text-muted); font-family: var(--font-serif); }
-    .kakeibo-box .val { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--autumn-terracotta); }
+    .kakeibo-box .lbl { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; }
+    .kakeibo-box .val { font-size: 1.05rem; font-weight: 700; color: var(--autumn-terracotta); font-variant-numeric: tabular-nums; }
 
     .export-toolbar {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 14px;
+      gap: 6px;
+      margin-bottom: 12px;
     }
     .btn-export {
       padding: 8px;
       border-radius: 6px;
       border: 1px solid var(--border-soft);
       background: var(--card-bg);
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -620,26 +682,62 @@
       justify-content: center;
       gap: 4px;
     }
+
+    /* ====== 記帳表單：徹底修復 iOS Safari 日期覆蓋幣別破版 ====== */
     .kakeibo-form, .trans-box {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 14px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
-    .f-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .f-group { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .f-group label { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* 關鍵 Grid 佈局：防擠壓、防覆蓋 */
+    .f-row-grid-date {
+      display: grid;
+      grid-template-columns: 1fr 100px;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .f-row { 
+      display: flex; 
+      gap: 8px; 
+      margin-bottom: 8px; 
+    }
+    .f-group { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 3px; 
+      min-width: 0; 
+    }
+    .f-group label { 
+      font-size: 0.68rem; 
+      color: var(--text-muted); 
+      font-weight: 600;
+    }
+
     input, select, textarea {
       width: 100%;
-      padding: 8px 10px;
+      min-width: 0;
+      min-height: 40px;
+      padding: 7px 9px;
       border: 1px solid var(--border-soft);
       border-radius: 6px;
       background: #FAF8F5;
       font-size: 15px;
       color: var(--text-main);
       outline: none;
-      font-family: var(--font-sans);
+      font-family: var(--font-stack);
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2386868B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      background-size: 12px;
+      padding-right: 22px;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--autumn-amber); background: #FFF; }
     .btn-add {
@@ -647,46 +745,46 @@
       background: var(--autumn-amber);
       color: white;
       border: none;
-      padding: 11px;
-      font-size: 0.88rem;
+      padding: 10px;
+      font-size: 0.84rem;
       border-radius: 6px;
       cursor: pointer;
-      font-family: var(--font-serif);
+      font-weight: 700;
       margin-top: 4px;
     }
 
-    .kakeibo-records { display: flex; flex-direction: column; gap: 14px; }
-    .date-group { display: flex; flex-direction: column; gap: 6px; }
+    .kakeibo-records { display: flex; flex-direction: column; gap: 12px; }
+    .date-group { display: flex; flex-direction: column; gap: 5px; }
     .date-group-header {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      padding: 4px 6px;
+      padding: 3px 4px;
       border-bottom: 1px dashed var(--border-soft);
     }
-    .date-title { font-family: var(--font-serif); font-size: 0.86rem; font-weight: 700; color: var(--slate-blue); }
-    .date-subtotal { font-size: 0.74rem; color: var(--text-muted); }
+    .date-title { font-size: 0.82rem; font-weight: 700; color: var(--slate-blue); }
+    .date-subtotal { font-size: 0.72rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
     .record-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      padding: 10px 12px;
+      padding: 9px 11px;
       border-radius: 6px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .rec-main { font-size: 0.88rem; font-weight: 600; }
-    .rec-meta { font-size: 0.7rem; color: var(--text-muted); }
-    .rec-twd { font-family: var(--font-serif); font-size: 0.92rem; font-weight: 700; }
-    .rec-jpy { font-size: 0.7rem; color: var(--text-muted); text-align: right; }
+    .rec-main { font-size: 0.85rem; font-weight: 600; }
+    .rec-meta { font-size: 0.68rem; color: var(--text-muted); }
+    .rec-twd { font-size: 0.88rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .rec-jpy { font-size: 0.68rem; color: var(--text-muted); text-align: right; font-variant-numeric: tabular-nums; }
 
     /* ====== TAB 4: 雲端硬碟 CLOUD ====== */
     .cloud-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 14px;
+      border-radius: 10px;
+      padding: 14px 15px;
+      margin-bottom: 12px;
     }
     .cloud-link-btn {
       display: flex;
@@ -697,25 +795,26 @@
       background: var(--slate-blue);
       color: #FFF;
       text-decoration: none;
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      margin-top: 10px;
+      padding: 11px;
+      border-radius: 7px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin-top: 8px;
     }
     .cloud-sec-actions {
       display: flex;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
+      margin-top: 6px;
     }
     .btn-cloud-tool {
       flex: 1;
       background: var(--tag-bg);
       border: 1px solid var(--border-soft);
       padding: 6px;
-      border-radius: 4px;
-      font-size: 0.74rem;
-      color: var(--text-muted);
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-sub);
       cursor: pointer;
       text-align: center;
     }
@@ -723,28 +822,29 @@
     /* ====== TAB 5: 實用語 TRANSLATE ====== */
     .phrase-cat-nav {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       overflow-x: auto;
-      margin: 10px 0;
+      margin: 8px 0;
       scrollbar-width: none;
     }
     .phrase-cat-nav::-webkit-scrollbar { display: none; }
     .phrase-cat-pill {
       flex: 0 0 auto;
-      padding: 5px 12px;
-      border-radius: 16px;
-      font-size: 0.76rem;
+      padding: 5px 11px;
+      border-radius: 14px;
+      font-size: 0.74rem;
       background: var(--tag-bg);
       color: var(--text-muted);
       cursor: pointer;
+      font-weight: 600;
     }
     .phrase-cat-pill.active { background: var(--slate-blue); color: white; }
-    .phrase-grid { display: flex; flex-direction: column; gap: 8px; }
+    .phrase-grid { display: flex; flex-direction: column; gap: 7px; }
     .phrase-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      padding: 10px 12px;
-      border-radius: 6px;
+      padding: 9px 12px;
+      border-radius: 7px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -756,43 +856,65 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .sos-call-card {
       background: #FFF;
       border: 1.5px solid #FFCDD2;
       border-radius: 8px;
-      padding: 12px;
+      padding: 10px;
       text-align: center;
     }
-    .sos-call-title { font-size: 0.78rem; font-weight: 700; color: var(--accent-red); margin-bottom: 4px; }
+    .sos-call-title { font-size: 0.76rem; font-weight: 700; color: var(--accent-red); margin-bottom: 2px; }
     .btn-sos-call {
       display: block;
       background: var(--accent-red);
       color: white;
       text-decoration: none;
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 0.86rem;
+      padding: 7px;
+      border-radius: 5px;
+      font-size: 0.82rem;
       font-weight: 700;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .sos-guide-card {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
-      border-radius: 8px;
-      padding: 14px;
-      margin-bottom: 12px;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
     }
 
-    /* 通用 Modal */
+    .speech-toast {
+      position: fixed;
+      bottom: calc(75px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(30, 30, 32, 0.92);
+      color: #FAF8F5;
+      font-size: 0.74rem;
+      padding: 7px 14px;
+      border-radius: 20px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .speech-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     .base-modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(30, 25, 23, 0.85);
+      background: rgba(0, 0, 0, 0.65);
       z-index: 999;
-      padding: 20px;
+      padding: 16px;
       align-items: center;
       justify-content: center;
     }
@@ -800,25 +922,26 @@
     .modal-content {
       background: #FFF;
       border-radius: 12px;
-      padding: 20px;
+      padding: 18px;
       width: 100%;
-      max-width: 380px;
+      max-width: 370px;
       max-height: 90vh;
       overflow-y: auto;
     }
     .big-ja {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       white-space: pre-line;
+      line-height: 1.35;
     }
     .big-zh {
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
     .btn-close-modal {
       width: 100%;
@@ -826,16 +949,17 @@
       border: 1px solid var(--border-soft);
       padding: 8px;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
       cursor: pointer;
+      font-weight: 600;
     }
     #pdf-render-area {
       display: none;
       background: #FAF8F5;
-      padding: 30px;
-      color: #342E2B;
-      font-family: var(--font-sans);
+      padding: 28px;
+      color: #1D1D1F;
+      font-family: var(--font-stack);
       width: 794px;
     }
   </style>
@@ -889,7 +1013,7 @@
         </div>
       </div>
       <div class="outfit-guide">
-        <div class="outfit-title">／ 秋日散策 ． 今日著裝提案 ／</div>
+        <div class="outfit-title">今日著裝提案 ． OUTFIT</div>
         <div class="outfit-grid" id="outfit-badges"></div>
       </div>
     </div>
@@ -897,8 +1021,8 @@
     <!-- 路線圖折疊 -->
     <div class="transit-accordion">
       <button class="transit-accordion-btn" onclick="toggleTransitMap()">
-        <span>🚇 福岡地下鐵 ＆ 西鐵全線路網圖 ． Route Map</span>
-        <span id="transit-arrow">▼ 點擊展開</span>
+        <span>🚇 福岡地下鐵 ＆ 西鐵全線路網圖</span>
+        <span id="transit-arrow">▼ 展開</span>
       </button>
       <div class="transit-accordion-content" id="transit-content">
         <img src="https://subway.city.fukuoka.lg.jp/cha_trad/route/img/map.jpg" 
@@ -911,7 +1035,7 @@
              onclick="openImageModal(this.src)">
         <div style="display:flex; justify-content:center; gap:8px; margin-top:8px;">
           <button class="btn-sm" onclick="openImageModal(document.getElementById('main-metro-img').src)">🔍 全螢幕看圖</button>
-          <a href="https://subway.city.fukuoka.lg.jp/cha_trad/route/" target="_blank" rel="noopener noreferrer" class="btn-sm">🌐 官方高解析網頁</a>
+          <a href="https://subway.city.fukuoka.lg.jp/cha_trad/route/" target="_blank" rel="noopener noreferrer" class="btn-sm">🌐 官方路線網頁</a>
         </div>
       </div>
     </div>
@@ -927,7 +1051,6 @@
 
   <!-- TAB 2: 憑證收納 WALLET -->
   <main id="wallet-view" class="tab-view">
-    <!-- 長榮航班憑證 -->
     <div class="wallet-card">
       <div class="wallet-head">
         <span class="wallet-title">✈️ 長榮航空航班憑證 (BR 106 / BR 105)</span>
@@ -954,7 +1077,6 @@
       </div>
     </div>
 
-    <!-- 微笑飯店入住憑證 -->
     <div class="wallet-card">
       <div class="wallet-head">
         <span class="wallet-title">🏨 博多站前微笑飯店 入住憑證</span>
@@ -998,7 +1120,6 @@
       </div>
     </div>
 
-    <!-- 通關備忘 -->
     <div class="wallet-card">
       <div class="wallet-head">
         <span class="wallet-title">🛡️ 日本通關手續備忘</span>
@@ -1016,10 +1137,9 @@
 
   <!-- TAB 3: 旅費手帳 EXPENSE & 匯率/退稅試算 -->
   <main id="kakeibo-view" class="tab-view">
-    <!-- 即時匯率看板與重設 -->
     <div class="rate-status-card">
       <div class="rate-status-left">
-        <span class="rate-status-title">🌐 今日即時市場匯率 (JPY ➔ TWD)</span>
+        <span class="rate-status-title">今日市場匯率 (JPY ➔ TWD)</span>
         <span class="rate-status-val" id="live-api-rate">讀取中...</span>
       </div>
       <div class="rate-status-right">
@@ -1028,11 +1148,10 @@
       </div>
     </div>
 
-    <!-- 採買退稅試算機 -->
     <div class="tax-calc-card">
       <div class="calc-head">
         <span>🛍️ 即時匯率 ＆ 日本退稅結帳試算</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">使用匯率: <span id="calc-disp-rate">0.2150</span></span>
+        <span style="font-size:0.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">使用匯率: <span id="calc-disp-rate">0.2150</span></span>
       </div>
       
       <div class="calc-seg">
@@ -1042,7 +1161,7 @@
 
       <div class="calc-seg">
         <button id="btn-rate-10" class="active" onclick="setTaxRatePreset(0.10)">一般品 10%</button>
-        <button id="btn-rate-8" onclick="setTaxRatePreset(0.08)">食品/消耗 8%</button>
+        <button id="btn-rate-8" onclick="setTaxRatePreset(0.08)">消耗品 8%</button>
         <button id="btn-rate-custom" onclick="toggleCustomRateInput()">自訂 % 數</button>
       </div>
 
@@ -1070,7 +1189,6 @@
       <button class="btn-add" style="margin-top:8px; padding:8px; font-size:0.8rem; background:var(--slate-blue);" onclick="applyCalcToKakeibo()">＋ 帶入下方記帳表單</button>
     </div>
 
-    <!-- 總額看板 -->
     <div class="kakeibo-stats">
       <div class="kakeibo-box">
         <div class="lbl">TOTAL TWD 總支出</div>
@@ -1087,14 +1205,14 @@
       <button class="btn-export" onclick="exportHandmadePDF()">📄 匯出 PDF</button>
     </div>
 
-    <!-- 記帳表單 -->
+    <!-- 記帳表單：徹底修復 iOS Safari 日期覆蓋幣別破版 -->
     <div class="kakeibo-form">
-      <div class="f-row">
-        <div class="f-group" style="flex:1.5;">
+      <div class="f-row-grid-date">
+        <div class="f-group">
           <label>消費日期</label>
           <input type="date" id="k-date">
         </div>
-        <div class="f-group" style="flex:1;">
+        <div class="f-group">
           <label>幣別</label>
           <select id="k-curr">
             <option value="JPY">日圓 (¥)</option>
@@ -1102,18 +1220,21 @@
           </select>
         </div>
       </div>
+
       <div class="f-row">
         <div class="f-group">
           <label>支出名目</label>
           <input type="text" id="k-item" placeholder="如: とめ手羽 酥脆雞翅">
         </div>
       </div>
+
       <div class="f-row">
         <div class="f-group">
           <label>金額</label>
           <input type="number" id="k-amount" inputmode="decimal" placeholder="0">
         </div>
       </div>
+
       <div class="f-row">
         <div class="f-group">
           <label>分類</label>
@@ -1143,13 +1264,12 @@
 
   <!-- TAB 4: 雲端硬碟 CLOUD -->
   <main id="cloud-view" class="tab-view">
-    <!-- 雲端旅行檔案庫 -->
     <div class="cloud-card">
       <div class="wallet-head">
-        <span class="wallet-title">☁️ 旅行資料總備份庫</span>
+        <span class="wallet-title">☁️️ 旅行資料總備份庫</span>
         <button class="btn-sm" onclick="editCloudLink('drive')">⚙️ 設定網址</button>
       </div>
-      <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">
+      <p style="font-size:0.76rem; color:var(--text-muted); margin-bottom:8px;">
         放置護照影本、機票購票證明 PDF、飯店確認信等行程電子檔案。
       </p>
       <a href="https://drive.google.com/drive/folders/1H4iyt0DRihlnc6TO2D53mQyz0qC6JPlM?usp=drive_link" id="cloud-link-drive" target="_blank" rel="noopener noreferrer" class="cloud-link-btn">
@@ -1160,13 +1280,12 @@
       </div>
     </div>
 
-    <!-- 旅途合照相簿 -->
     <div class="cloud-card">
       <div class="wallet-head">
         <span class="wallet-title">📸 旅途合照與影片共享相簿</span>
         <button class="btn-sm" onclick="editCloudLink('photo')">⚙️ 設定網址</button>
       </div>
-      <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">
+      <p style="font-size:0.76rem; color:var(--text-muted); margin-bottom:8px;">
         每日回到微笑飯店連上 Wi-Fi，集中上傳原檔照片與 4K 影片。
       </p>
       <a href="https://drive.google.com/drive/folders/1ob-LnFy4P8SHY4ELd-ib_wPybvFpb_Bv?usp=drive_link" id="cloud-link-photo" target="_blank" rel="noopener noreferrer" class="cloud-link-btn" style="background:var(--autumn-terracotta);">
@@ -1177,10 +1296,9 @@
       </div>
     </div>
 
-    <!-- 離線備份檢查清單 -->
     <div class="wallet-card">
-      <div class="wallet-title" style="margin-bottom:8px;">📴 行前雲端必備備份核對</div>
-      <div style="font-size:0.8rem; color:var(--text-muted); line-height:1.8;">
+      <div class="wallet-title" style="margin-bottom:6px;">📴 行前雲端必備備份核對</div>
+      <div style="font-size:0.78rem; color:var(--text-sub); line-height:1.7;">
         <div>✓ 兩人護照內頁清晰照片</div>
         <div>✓ 兩人身分證與健保卡正反面</div>
         <div>✓ 長榮電子機票購票證明 PDF</div>
@@ -1192,13 +1310,13 @@
   <!-- TAB 5: 實用語 TRANSLATE -->
   <main id="translate-view" class="tab-view">
     <div class="trans-box">
-      <div class="form-title" style="font-size:0.86rem; color:var(--slate-blue); font-weight:600; margin-bottom:8px;">／ 中日即時翻譯 ／</div>
-      <textarea id="trans-input" rows="2" style="width:100%; resize:none; margin-bottom:8px;" placeholder="輸入中文..."></textarea>
-      <button class="btn-add" id="btn-do-trans" onclick="performTranslation()">翻譯為日文 ． TRANSLATE</button>
+      <div class="form-title" style="font-size:0.84rem; color:var(--slate-blue); font-weight:700; margin-bottom:6px;">中日即時翻譯 ． TRANSLATE</div>
+      <textarea id="trans-input" rows="2" style="width:100%; resize:none; margin-bottom:6px;" placeholder="輸入中文..."></textarea>
+      <button class="btn-add" id="btn-do-trans" onclick="performTranslation()">翻譯為日文</button>
 
-      <div id="trans-result-box" style="display:none; background:#FDFBF7; border:1px solid var(--border-soft); border-radius:6px; padding:12px; margin-top:10px;">
-        <div id="trans-ja-result" style="font-size:1.05rem; font-weight:600; color:var(--autumn-terracotta); line-height:1.4;"></div>
-        <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:8px;">
+      <div id="trans-result-box" style="display:none; background:#FDFBF7; border:1px solid var(--border-soft); border-radius:6px; padding:10px; margin-top:8px;">
+        <div id="trans-ja-result" style="font-size:1rem; font-weight:700; color:var(--autumn-terracotta); line-height:1.35;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:5px; margin-top:6px;">
           <button class="btn-sm" id="btn-voice-input" onclick="speakCurrentText()">🔊 發音</button>
           <button class="btn-sm" onclick="showBigModalCurrent()">🔍 放大給店員看</button>
         </div>
@@ -1219,12 +1337,12 @@
     <div class="sos-call-grid">
       <div class="sos-call-card">
         <div class="sos-call-title">🚨 日本當地警察局</div>
-        <div style="font-size:0.7rem; color:var(--text-muted);">緊急事故 / 失竊 / 糾紛</div>
+        <div style="font-size:0.68rem; color:var(--text-muted);">緊急事故 / 失竊 / 糾紛</div>
         <a href="tel:110" class="btn-sos-call">撥打 110</a>
       </div>
       <div class="sos-call-card">
         <div class="sos-call-title">🚑 救護車 / 消防</div>
-        <div style="font-size:0.7rem; color:var(--text-muted);">急性重病 / 意外傷患</div>
+        <div style="font-size:0.68rem; color:var(--text-muted);">急性重病 / 意外傷患</div>
         <a href="tel:119" class="btn-sos-call">撥打 119</a>
       </div>
     </div>
@@ -1243,7 +1361,7 @@
       </div>
       <div class="wallet-item">
         <span class="lbl">地址</span>
-        <span class="val" style="font-size:0.75rem;">福岡市中央區櫻坂 3-12-42</span>
+        <span class="val" style="font-size:0.74rem;">福岡市中央區櫻坂 3-12-42</span>
       </div>
     </div>
 
@@ -1260,7 +1378,7 @@
 
     <div class="sos-guide-card">
       <div class="wallet-title" style="margin-bottom:6px;">📋 護照遺失應變 3 步驟</div>
-      <ol style="font-size:0.78rem; color:var(--text-muted); padding-left:18px; line-height:1.7;">
+      <ol style="font-size:0.76rem; color:var(--text-sub); padding-left:16px; line-height:1.65;">
         <li>就近至派出所（交番）報案，索取《紛失届出証明書》。</li>
         <li>備妥身分證照片備份（在雲端資料庫中）與大頭照 2 張。</li>
         <li>前往台北駐福岡辦事處申辦返國入國證明書。</li>
@@ -1270,49 +1388,54 @@
     <div class="wallet-title" style="margin:10px 0 6px;">💬 急難大字手指卡</div>
     <div class="phrase-grid">
       <div class="phrase-card" onclick="openBigModal('体調が非常に悪いです。救急車を呼んでください。', '我身體非常不舒服，請幫我叫救護車')">
-        <span style="font-size:0.84rem; font-weight:600;">我身體不舒服，請幫我叫救護車</span>
+        <span style="font-size:0.82rem; font-weight:600;">我身體不舒服，請幫我叫救護車</span>
         <span style="color:var(--autumn-amber);">🔍</span>
       </div>
       <div class="phrase-card" onclick="openBigModal('電車の中に忘れ物をしてしまいました。', '我把東西遺留在電車/車站了')">
-        <span style="font-size:0.84rem; font-weight:600;">我把東西遺留在電車/車站了</span>
+        <span style="font-size:0.82rem; font-weight:600;">我把東西遺留在電車/車站了</span>
         <span style="color:var(--autumn-amber);">🔍</span>
       </div>
       <div class="phrase-card" onclick="openBigModal('パスポートを紛失してしまいました。最寄りの交番はどこですか？', '我的護照遺失了，請問最近的派出所在哪裡？')">
-        <span style="font-size:0.84rem; font-weight:600;">護照遺失了，請問最近的交番在哪？</span>
+        <span style="font-size:0.82rem; font-weight:600;">護照遺失了，請問最近的交番在哪？</span>
         <span style="color:var(--autumn-amber);">🔍</span>
       </div>
     </div>
   </main>
 
+  <!-- 語音防呆 Toast -->
+  <div class="speech-toast" id="speech-toast">
+    💡 若手機為靜音模式，請戴上耳機聆聽，或稍調大側邊音量 / 切換響鈴
+  </div>
+
   <!-- 編輯憑證 Modal -->
   <div class="base-modal" id="walletModal">
     <div class="modal-content">
-      <div class="modal-title" id="wallet-modal-title" style="font-weight:700; margin-bottom:12px;">編輯憑證資訊</div>
+      <div class="modal-title" id="wallet-modal-title" style="font-weight:700; margin-bottom:10px;">編輯憑證資訊</div>
       <input type="hidden" id="edit-wallet-type">
       
       <div id="wallet-inputs-flight" style="display:none;">
-        <div class="f-group" style="margin-bottom:10px;">
+        <div class="f-group" style="margin-bottom:8px;">
           <label>長榮航空訂位代號 (PNR)</label>
           <input type="text" id="wallet-input-pnr">
         </div>
       </div>
 
       <div id="wallet-inputs-hotel" style="display:none;">
-        <div class="f-group" style="margin-bottom:10px;">
+        <div class="f-group" style="margin-bottom:8px;">
           <label>確認編號</label>
           <input type="text" id="wallet-input-confirm">
         </div>
-        <div class="f-group" style="margin-bottom:10px;">
+        <div class="f-group" style="margin-bottom:8px;">
           <label>PIN 碼</label>
           <input type="text" id="wallet-input-pin">
         </div>
-        <div class="f-group" style="margin-bottom:10px;">
+        <div class="f-group" style="margin-bottom:8px;">
           <label>訂單編號</label>
           <input type="text" id="wallet-input-order">
         </div>
       </div>
 
-      <button class="btn-add" style="margin-bottom:8px;" onclick="saveWalletItem()">儲存 ． SAVE</button>
+      <button class="btn-add" style="margin-bottom:6px;" onclick="saveWalletItem()">儲存 ． SAVE</button>
       <button class="btn-close-modal" onclick="closeWalletModal()">取消</button>
     </div>
   </div>
@@ -1320,13 +1443,13 @@
   <!-- 編輯雲端連結 Modal -->
   <div class="base-modal" id="cloudModal">
     <div class="modal-content">
-      <div class="modal-title" id="cloud-modal-title" style="font-weight:700; margin-bottom:12px;">設定雲端連結</div>
+      <div class="modal-title" id="cloud-modal-title" style="font-weight:700; margin-bottom:10px;">設定雲端連結</div>
       <input type="hidden" id="edit-cloud-type">
-      <div class="f-group" style="margin-bottom:10px;">
+      <div class="f-group" style="margin-bottom:8px;">
         <label>貼上 Google Drive / iCloud 共享網址</label>
         <input type="url" id="cloud-input-url" placeholder="https://...">
       </div>
-      <button class="btn-add" style="margin-bottom:8px;" onclick="saveCloudLink()">儲存連結 ． SAVE</button>
+      <button class="btn-add" style="margin-bottom:6px;" onclick="saveCloudLink()">儲存連結 ． SAVE</button>
       <button class="btn-close-modal" onclick="closeCloudModal()">取消</button>
     </div>
   </div>
@@ -1334,29 +1457,29 @@
   <!-- 行程編輯 Modal -->
   <div class="base-modal" id="planModal">
     <div class="modal-content">
-      <div class="modal-title" id="plan-modal-title" style="font-weight:700; margin-bottom:12px;">新增/編輯行程</div>
+      <div class="modal-title" id="plan-modal-title" style="font-weight:700; margin-bottom:10px;">新增/編輯行程</div>
       <input type="hidden" id="edit-plan-idx" value="-1">
-      <div class="f-group" style="margin-bottom:8px;">
+      <div class="f-group" style="margin-bottom:6px;">
         <label>時間區間 (自動排序)</label>
         <input type="text" id="edit-plan-time" placeholder="如: 14:30 – 16:00">
       </div>
-      <div class="f-group" style="margin-bottom:8px;">
+      <div class="f-group" style="margin-bottom:6px;">
         <label>行程標題</label>
         <input type="text" id="edit-plan-title" placeholder="景點或餐廳名稱">
       </div>
-      <div class="f-group" style="margin-bottom:8px;">
+      <div class="f-group" style="margin-bottom:6px;">
         <label>軌道交通提示</label>
         <input type="text" id="edit-plan-transit" placeholder="如: 空港線 [K11 博多駅]">
       </div>
-      <div class="f-group" style="margin-bottom:8px;">
+      <div class="f-group" style="margin-bottom:6px;">
         <label>地圖搜尋關鍵字</label>
         <input type="text" id="edit-plan-map">
       </div>
-      <div class="f-group" style="margin-bottom:12px;">
+      <div class="f-group" style="margin-bottom:10px;">
         <label>備註心得</label>
         <textarea id="edit-plan-note" rows="2"></textarea>
       </div>
-      <button class="btn-add" style="margin-bottom:8px;" onclick="savePlanItem()">儲存行程</button>
+      <button class="btn-add" style="margin-bottom:6px;" onclick="savePlanItem()">儲存行程</button>
       <button class="btn-close-modal" onclick="closePlanModal()">取消</button>
     </div>
   </div>
@@ -1366,7 +1489,10 @@
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="big-ja" id="modal-ja"></div>
       <div class="big-zh" id="modal-zh"></div>
-      <button class="btn-add" id="btn-modal-speech" style="margin-bottom:8px;" onclick="triggerSpeech(document.getElementById('modal-ja').innerText)">🔊 播放日文語音</button>
+      <button class="btn-add" id="btn-modal-speech" style="margin-bottom:6px;" onclick="triggerSpeech(document.getElementById('modal-ja').innerText)">🔊 播放日文語音</button>
+      <div style="font-size:0.7rem; color:var(--text-muted); text-align:center; margin-bottom:10px;">
+        💡 若靜音模式下無聲，請戴上耳機或切換響鈴
+      </div>
       <button class="btn-close-modal" onclick="closeBigModal()">關閉 Close</button>
     </div>
   </div>
@@ -1375,7 +1501,7 @@
   <div class="base-modal" id="imgModal" onclick="closeImageModal()">
     <div style="max-width:95%; max-height:90vh; text-align:center;" onclick="event.stopPropagation()">
       <img id="imgModalSrc" src="" referrerpolicy="no-referrer" style="width:100%; height:auto; max-height:80vh; object-fit:contain; border-radius:8px; background:#FFF;">
-      <button class="btn-close-modal" style="margin-top:10px; background:rgba(255,255,255,0.95);" onclick="closeImageModal()">關閉地圖</button>
+      <button class="btn-close-modal" style="margin-top:8px; background:rgba(255,255,255,0.95);" onclick="closeImageModal()">關閉地圖</button>
     </div>
   </div>
 
@@ -1473,7 +1599,6 @@
     let completed = JSON.parse(localStorage.getItem('fk_done_tasks')) || {};
     let customItinerary = JSON.parse(localStorage.getItem('fk_custom_itinerary')) || JSON.parse(JSON.stringify(defaultItinerary));
 
-    // 專屬預設憑證資料（直接硬編碼，任一手機開啟皆完全同步）
     let walletData = JSON.parse(localStorage.getItem('fk_wallet_data')) || {
       flightPnr: "EJABM6",
       hotelConfirm: "RYa0ngw55e",
@@ -1481,7 +1606,6 @@
       hotelOrder: "1616333867909966"
     };
 
-    // 專屬雲端硬碟與相簿連結
     let cloudData = JSON.parse(localStorage.getItem('fk_cloud_data')) || {
       driveUrl: "https://drive.google.com/drive/folders/1H4iyt0DRihlnc6TO2D53mQyz0qC6JPlM?usp=drive_link",
       photoUrl: "https://drive.google.com/drive/folders/1ob-LnFy4P8SHY4ELd-ib_wPybvFpb_Bv?usp=drive_link"
@@ -1494,7 +1618,6 @@
     let currentInputZh = "";
     let activePhraseCat = 'dining';
 
-    // 語音引擎初始化（確保 iOS 語音就緒）
     let synthVoices = [];
     function initSpeechEngine() {
       if ('speechSynthesis' in window) {
@@ -1506,11 +1629,9 @@
     }
     initSpeechEngine();
 
-    // 頁面預設日期
     const today = new Date();
     document.getElementById('k-date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-    // 自動取得即時匯率
     async function fetchLiveExchangeRate() {
       try {
         const res = await fetch('https://open.er-api.com/v6/latest/JPY');
@@ -1559,7 +1680,6 @@
 
     fetchLiveExchangeRate();
 
-    // 福岡時區時鐘
     function updateFukuokaClock() {
       const clockEl = document.getElementById('live-clock');
       if (!clockEl) return;
@@ -1583,10 +1703,9 @@
     updateFukuokaClock();
     setInterval(updateFukuokaClock, 1000);
 
-    // 即時天氣
     async function fetchWeather() {
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
         const data = await res.json();
         const curr = Math.round(data.current.temperature_2m);
         const max = Math.round(data.daily.temperature_2m_max[0]);
@@ -1597,10 +1716,10 @@
         document.getElementById('wt-rain').innerText = `💧 降雨機率 ${rain}%`;
         document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
         document.getElementById('outfit-badges').innerHTML = `
-          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著</span><span class="outfit-val">${min < 18 ? '薄風衣 / 開襟針織' : '輕夾克'}</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著</span><span class="outfit-val">透氣棉T / 長袖襯衫</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">鞋履</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行</span><span class="outfit-val">${rain >= 30 ? '摺疊傘' : '遮陽墨鏡'}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${min < 18 ? '薄風衣 / 開襟針織' : '輕夾克'}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">透氣棉T / 長袖襯衫</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rain >= 30 ? '摺疊傘 ． 備用' : '防曬墨鏡 ． 輕便'}</span></div></div>
         `;
       } catch (e) {
         document.getElementById('wt-temp').innerText = '21°C';
@@ -1628,7 +1747,7 @@
     function toggleTransitMap() {
       const c = document.getElementById('transit-content');
       c.classList.toggle('active');
-      document.getElementById('transit-arrow').innerText = c.classList.contains('active') ? '▲ 點擊收起' : '▼ 點擊展開';
+      document.getElementById('transit-arrow').innerText = c.classList.contains('active') ? '▲ 收起' : '▼ 展開';
     }
 
     function handleMetroImgError(img) {
@@ -1641,7 +1760,6 @@
     }
     function closeImageModal() { document.getElementById('imgModal').classList.remove('active'); }
 
-    // 行程渲染與觸控拖曳
     function parseTimeToMinutes(t) {
       if (!t) return 9999;
       const m = t.match(/(\d{1,2}):(\d{2})/);
@@ -1667,7 +1785,7 @@
               <div class="plan-actions">
                 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.mapQuery || p.title)}" target="_blank" rel="noopener noreferrer" class="btn-map">📍 導航</a>
                 <button class="btn-sm" onclick="editPlanItem(${idx})">✏️</button>
-                <button class="btn-sm" style="color:#B5A89E;" onclick="deletePlanItem(${idx})">🗑️</button>
+                <button class="btn-sm" style="color:#A19B91;" onclick="deletePlanItem(${idx})">🗑️</button>
                 <div class="drag-handle">⠿</div>
                 <button class="btn-check" onclick="togglePlan('${tid}')">✓</button>
               </div>
@@ -1787,7 +1905,6 @@
       }
     }
 
-    // 憑證 Wallet 渲染與編輯
     function renderWalletView() {
       document.getElementById('w-flight-pnr').innerText = walletData.flightPnr || 'EJABM6';
       document.getElementById('w-hotel-confirm').innerText = walletData.hotelConfirm || 'RYa0ngw55e';
@@ -1828,7 +1945,6 @@
 
     function closeWalletModal() { document.getElementById('walletModal').classList.remove('active'); }
 
-    // 採買退稅試算機
     function setTaxMode(m) {
       taxMode = m;
       document.getElementById('btn-tax-ex').classList.toggle('active', m === 'ex');
@@ -1965,7 +2081,7 @@
         html += `
           <div class="date-group">
             <div class="date-group-header">
-              <span class="date-title">🗓️️ ${dateKey}</span>
+              <span class="date-title">🗓 ${dateKey}</span>
               <span class="date-subtotal">小計 NT$ ${subTwd.toLocaleString()} (¥ ${subJpy.toLocaleString()})</span>
             </div>
             ${items.map(it => `
@@ -1979,7 +2095,7 @@
                     <div class="rec-twd">NT$ ${it.twd.toLocaleString()}</div>
                     <div class="rec-jpy">¥ ${it.jpy.toLocaleString()}</div>
                   </div>
-                  <button class="btn-sm" style="color:#B5A89E; border:none; background:none;" onclick="removeRecord(${it.id})">✕</button>
+                  <button class="btn-sm" style="color:#A19B91; border:none; background:none;" onclick="removeRecord(${it.id})">✕</button>
                 </div>
               </div>
             `).join('')}
@@ -1989,7 +2105,6 @@
       box.innerHTML = html;
     }
 
-    // 雲端硬碟
     function renderCloudView() {
       document.getElementById('cloud-link-drive').href = cloudData.driveUrl;
       document.getElementById('cloud-link-photo').href = cloudData.photoUrl;
@@ -2023,11 +2138,21 @@
       copyText(url);
     }
 
-    // 翻譯與純原生 Web Speech API（解決 iOS 發聲與靜音問題）
+    let toastTimeout = null;
+    function showSpeechToast() {
+      const toast = document.getElementById('speech-toast');
+      if (!toast) return;
+      toast.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
     function triggerSpeech(text) {
       if (!text) return;
       if (!('speechSynthesis' in window)) {
-        alert('您的瀏覽器不支援語音播放功能！');
+        alert('您的手機瀏覽器不支援語音播放功能！');
         return;
       }
 
@@ -2044,6 +2169,7 @@
       if (jaVoice) utterance.voice = jaVoice;
 
       window.speechSynthesis.speak(utterance);
+      showSpeechToast();
     }
 
     function pickPhraseCat(c, el) {
@@ -2058,8 +2184,8 @@
       document.getElementById('phrase-list-container').innerHTML = list.map(it => `
         <div class="phrase-card" onclick="openBigModal('${it.ja}', '${it.zh}')">
           <div>
-            <div style="font-size:0.86rem; font-weight:600;">${it.zh}</div>
-            <div style="font-size:0.78rem; color:var(--autumn-amber);">${it.ja}</div>
+            <div style="font-size:0.84rem; font-weight:600;">${it.zh}</div>
+            <div style="font-size:0.76rem; color:var(--autumn-amber); font-weight:500;">${it.ja}</div>
           </div>
           <span>🔍</span>
         </div>
@@ -2081,7 +2207,7 @@
       } catch (e) {
         alert('翻譯網路連線忙碌，請稍後再試！');
       } finally {
-        btn.innerText = '翻譯為日文 ． TRANSLATE';
+        btn.innerText = '翻譯為日文';
       }
     }
 
@@ -2112,7 +2238,6 @@
       });
     }
 
-    // 匯出報表
     async function exportStyledExcel() {
       if (!records.length) return alert('無記帳資料');
       const wb = new ExcelJS.Workbook();
@@ -2137,10 +2262,10 @@
       let tot = 0;
       records.forEach(r => tot += r.twd);
       area.innerHTML = `
-        <h2 style="font-family:'Songti TC'; text-align:center;">福岡秋日散策 ． 旅費手帳</h2>
+        <h2 style="text-align:center; font-weight:700;">福岡秋日散策 ． 旅費手帳</h2>
         <div style="text-align:center; font-size:12px; margin-bottom:14px;">總支出：NT$ ${tot.toLocaleString()} (基準匯率: ${rate})</div>
         <table style="width:100%; border-collapse:collapse; font-size:11px;">
-          <tr style="background:#E8DCCF;"><th style="padding:4px;">日期</th><th>項目</th><th>分類</th><th>金額(TWD)</th></tr>
+          <tr style="background:#EFECE6;"><th style="padding:4px;">日期</th><th>項目</th><th>分類</th><th>金額(TWD)</th></tr>
           ${records.map(r => `<tr><td style="padding:4px; text-align:center;">${r.displayDate}</td><td>${r.name}</td><td style="text-align:center;">${r.type}</td><td style="text-align:right;">NT$ ${r.twd.toLocaleString()}</td></tr>`).join('')}
         </table>
       `;
