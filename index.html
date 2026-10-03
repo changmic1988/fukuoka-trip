@@ -457,7 +457,7 @@
       gap: 6px;
     }
 
-    /* ====== TAB 3: 旅費手帳 EXPENSE & 即時匯率部組 ====== */
+    /* ====== TAB 3: 旅費手帳 EXPENSE & 匯率/退稅試算 ====== */
     .rate-status-card {
       background: #FAF8F5;
       border: 1px solid var(--border-soft);
@@ -490,7 +490,7 @@
       gap: 6px;
     }
     .rate-status-input {
-      width: 72px;
+      width: 68px;
       padding: 4px 6px;
       font-size: 0.82rem;
       text-align: center;
@@ -520,8 +520,8 @@
     }
     .calc-seg {
       display: flex;
-      gap: 6px;
-      margin-bottom: 10px;
+      gap: 5px;
+      margin-bottom: 8px;
     }
     .calc-seg button {
       flex: 1;
@@ -539,6 +539,29 @@
       border-color: var(--autumn-amber);
       font-weight: 600;
     }
+
+    .custom-rate-input-box {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: var(--tag-bg);
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+    .custom-rate-input-box.active { display: flex; }
+    .custom-rate-input-box input {
+      width: 60px;
+      padding: 3px 6px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+      text-align: center;
+      background: #FFF;
+    }
+
     .calc-res-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -679,8 +702,6 @@
       font-size: 0.88rem;
       font-weight: 600;
       margin-top: 10px;
-      cursor: pointer;
-      border: none;
     }
     .cloud-sec-actions {
       display: flex;
@@ -791,6 +812,7 @@
       color: var(--autumn-terracotta);
       text-align: center;
       margin-bottom: 8px;
+      white-space: pre-line;
     }
     .big-zh {
       font-size: 0.92rem;
@@ -922,7 +944,7 @@
       <div class="wallet-item">
         <span class="lbl">訂位代號 (PNR)</span>
         <span class="val">
-          <strong id="w-flight-pnr">尚未設定</strong>
+          <strong id="w-flight-pnr">EJABM6</strong>
           <button class="btn-sm" onclick="copyText(document.getElementById('w-flight-pnr').innerText)">📋 複製</button>
         </span>
       </div>
@@ -932,22 +954,36 @@
       </div>
     </div>
 
-    <!-- 微笑飯店憑證 -->
+    <!-- 微笑飯店入住憑證 -->
     <div class="wallet-card">
       <div class="wallet-head">
-        <span class="wallet-title">🏨 博多站前微笑飯店 (Smile Hotel)</span>
-        <button class="btn-sm" onclick="editWalletItem('hotel')">✏️ 編輯確認號</button>
+        <span class="wallet-title">🏨 博多站前微笑飯店 入住憑證</span>
+        <button class="btn-sm" onclick="editWalletItem('hotel')">✏️ 編輯憑證</button>
+      </div>
+      <div class="wallet-item">
+        <span class="lbl">確認編號</span>
+        <span class="val">
+          <strong id="w-hotel-confirm">RYa0ngw55e</strong>
+          <button class="btn-sm" onclick="copyText(document.getElementById('w-hotel-confirm').innerText)">📋 複製</button>
+        </span>
+      </div>
+      <div class="wallet-item">
+        <span class="lbl">PIN 碼 (請勿透露)</span>
+        <span class="val">
+          <strong id="w-hotel-pin">6919</strong>
+          <button class="btn-sm" onclick="copyText(document.getElementById('w-hotel-pin').innerText)">📋 複製</button>
+        </span>
+      </div>
+      <div class="wallet-item">
+        <span class="lbl">訂單編號</span>
+        <span class="val">
+          <strong id="w-hotel-order">1616333867909966</strong>
+          <button class="btn-sm" onclick="copyText(document.getElementById('w-hotel-order').innerText)">📋 複製</button>
+        </span>
       </div>
       <div class="wallet-item">
         <span class="lbl">入住期</span>
         <span class="val">2026.10.16 – 10.20 (4晚全程不換宿)</span>
-      </div>
-      <div class="wallet-item">
-        <span class="lbl">訂房預約碼</span>
-        <span class="val">
-          <strong id="w-hotel-code">尚未設定</strong>
-          <button class="btn-sm" onclick="copyText(document.getElementById('w-hotel-code').innerText)">📋 複製</button>
-        </span>
       </div>
       <div class="wallet-item">
         <span class="lbl">飯店電話</span>
@@ -962,41 +998,33 @@
       </div>
     </div>
 
-    <!-- 通關與旅平險 -->
+    <!-- 通關備忘 -->
     <div class="wallet-card">
       <div class="wallet-head">
-        <span class="wallet-title">🛡️ 通關與旅遊保險備忘</span>
-        <button class="btn-sm" onclick="editWalletItem('insurance')">✏️ 編輯保單</button>
+        <span class="wallet-title">🛡️ 日本通關手續備忘</span>
       </div>
       <div class="wallet-item">
         <span class="lbl">Visit Japan Web</span>
-        <span class="val">入境審查與海關申報 QR 截圖</span>
+        <span class="val">入境審查 ＆ 海關申報 QR 截圖</span>
       </div>
       <div class="wallet-item">
-        <span class="lbl">海外旅平險保單號</span>
-        <span class="val">
-          <strong id="w-ins-code">尚未填寫</strong>
-          <button class="btn-sm" onclick="copyText(document.getElementById('w-ins-code').innerText)">📋 複製</button>
-        </span>
-      </div>
-      <div class="wallet-item">
-        <span class="lbl">24H 海外緊急救助</span>
-        <span class="val"><strong id="w-ins-phone">+886-2-XXXX-XXXX</strong></span>
+        <span class="lbl">通關提醒</span>
+        <span class="val">請預先於機上或出發前完成填寫</span>
       </div>
     </div>
   </main>
 
-  <!-- TAB 3: 旅費手帳 EXPENSE & 購物換算 -->
+  <!-- TAB 3: 旅費手帳 EXPENSE & 匯率/退稅試算 -->
   <main id="kakeibo-view" class="tab-view">
-    <!-- 匯率看板與微調小部件 -->
+    <!-- 即時匯率看板與重設 -->
     <div class="rate-status-card">
       <div class="rate-status-left">
-        <span class="rate-status-title">🌐 即時市場參考匯率 (JPY ➔ TWD)</span>
-        <span class="rate-status-val" id="live-api-rate">1 JPY ≈ 0.2150 TWD</span>
+        <span class="rate-status-title">🌐 今日即時市場匯率 (JPY ➔ TWD)</span>
+        <span class="rate-status-val" id="live-api-rate">讀取中...</span>
       </div>
       <div class="rate-status-right">
-        <span style="font-size:0.72rem; color:var(--text-muted);">使用匯率:</span>
         <input type="number" step="0.0005" id="user-custom-rate" class="rate-status-input" value="0.2150" onchange="updateCustomRate(this.value)">
+        <button class="btn-sm" onclick="resetToLiveRate()" title="重設為今日市場匯率">🔄 重設</button>
       </div>
     </div>
 
@@ -1004,17 +1032,30 @@
     <div class="tax-calc-card">
       <div class="calc-head">
         <span>🛍️ 即時匯率 ＆ 日本退稅結帳試算</span>
-        <span style="font-size:0.75rem; color:var(--text-muted);">換算基準: <span id="calc-disp-rate">0.2150</span></span>
+        <span style="font-size:0.75rem; color:var(--text-muted);">使用匯率: <span id="calc-disp-rate">0.2150</span></span>
       </div>
+      
       <div class="calc-seg">
         <button id="btn-tax-ex" class="active" onclick="setTaxMode('ex')">未稅價 (税抜)</button>
         <button id="btn-tax-in" onclick="setTaxMode('in')">含稅價 (税込)</button>
-        <button id="btn-rate-10" class="active" onclick="setTaxRate(0.10)">一般品 10%</button>
-        <button id="btn-rate-8" onclick="setTaxRate(0.08)">食品/消耗 8%</button>
       </div>
+
+      <div class="calc-seg">
+        <button id="btn-rate-10" class="active" onclick="setTaxRatePreset(0.10)">一般品 10%</button>
+        <button id="btn-rate-8" onclick="setTaxRatePreset(0.08)">食品/消耗 8%</button>
+        <button id="btn-rate-custom" onclick="toggleCustomRateInput()">自訂 % 數</button>
+      </div>
+
+      <div class="custom-rate-input-box" id="custom-rate-box">
+        <span>自訂比例/折數：</span>
+        <input type="number" id="custom-rate-val" placeholder="如 5" step="0.5" oninput="applyCustomRateVal(this.value)">
+        <span>%</span>
+      </div>
+
       <div class="f-row">
         <input type="number" id="calc-input-yen" inputmode="decimal" placeholder="輸入日幣金額 (如: 6800)" oninput="runTaxCalc()">
       </div>
+
       <div class="calc-res-grid">
         <div>
           <div class="calc-res-lbl">折合台幣 (實付)</div>
@@ -1105,15 +1146,15 @@
     <!-- 雲端旅行檔案庫 -->
     <div class="cloud-card">
       <div class="wallet-head">
-        <span class="wallet-title">☁️️ 旅行資料總備份庫</span>
+        <span class="wallet-title">☁️ 旅行資料總備份庫</span>
         <button class="btn-sm" onclick="editCloudLink('drive')">⚙️ 設定網址</button>
       </div>
       <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">
-        放置護照影本、機票購票證明 PDF、飯店確認信、電子保單。
+        放置護照影本、機票購票證明 PDF、飯店確認信等行程電子檔案。
       </p>
-      <button type="button" class="cloud-link-btn" onclick="openCloudApp('drive')">
-        🚀 開啟雲端硬碟 App / 資料夾
-      </button>
+      <a href="https://drive.google.com/drive/folders/1H4iyt0DRihlnc6TO2D53mQyz0qC6JPlM?usp=drive_link" id="cloud-link-drive" target="_blank" rel="noopener noreferrer" class="cloud-link-btn">
+        🚀 開啟雲端硬碟資料夾 (Google Drive)
+      </a>
       <div class="cloud-sec-actions">
         <button class="btn-cloud-tool" onclick="copyCloudLink('drive')">📋 複製網址</button>
       </div>
@@ -1126,11 +1167,11 @@
         <button class="btn-sm" onclick="editCloudLink('photo')">⚙️ 設定網址</button>
       </div>
       <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px;">
-        每日回到微笑飯店連上 Wi-Fi，一鍵上傳原檔照片與 4K 影片。
+        每日回到微笑飯店連上 Wi-Fi，集中上傳原檔照片與 4K 影片。
       </p>
-      <button type="button" class="cloud-link-btn" style="background:var(--autumn-terracotta);" onclick="openCloudApp('photo')">
-        📷 開啟相簿 App / 共享連結
-      </button>
+      <a href="https://drive.google.com/drive/folders/1ob-LnFy4P8SHY4ELd-ib_wPybvFpb_Bv?usp=drive_link" id="cloud-link-photo" target="_blank" rel="noopener noreferrer" class="cloud-link-btn" style="background:var(--autumn-terracotta);">
+        📷 開啟共享相簿資料夾 (Google Drive)
+      </a>
       <div class="cloud-sec-actions">
         <button class="btn-cloud-tool" onclick="copyCloudLink('photo')">📋 複製網址</button>
       </div>
@@ -1248,10 +1289,29 @@
     <div class="modal-content">
       <div class="modal-title" id="wallet-modal-title" style="font-weight:700; margin-bottom:12px;">編輯憑證資訊</div>
       <input type="hidden" id="edit-wallet-type">
-      <div class="f-group" style="margin-bottom:10px;">
-        <label id="wallet-input-lbl">資料內容</label>
-        <input type="text" id="wallet-input-val">
+      
+      <div id="wallet-inputs-flight" style="display:none;">
+        <div class="f-group" style="margin-bottom:10px;">
+          <label>長榮航空訂位代號 (PNR)</label>
+          <input type="text" id="wallet-input-pnr">
+        </div>
       </div>
+
+      <div id="wallet-inputs-hotel" style="display:none;">
+        <div class="f-group" style="margin-bottom:10px;">
+          <label>確認編號</label>
+          <input type="text" id="wallet-input-confirm">
+        </div>
+        <div class="f-group" style="margin-bottom:10px;">
+          <label>PIN 碼</label>
+          <input type="text" id="wallet-input-pin">
+        </div>
+        <div class="f-group" style="margin-bottom:10px;">
+          <label>訂單編號</label>
+          <input type="text" id="wallet-input-order">
+        </div>
+      </div>
+
       <button class="btn-add" style="margin-bottom:8px;" onclick="saveWalletItem()">儲存 ． SAVE</button>
       <button class="btn-close-modal" onclick="closeWalletModal()">取消</button>
     </div>
@@ -1306,7 +1366,7 @@
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="big-ja" id="modal-ja"></div>
       <div class="big-zh" id="modal-zh"></div>
-      <button class="btn-add" style="margin-bottom:8px;" onclick="playSpeechSafely(document.getElementById('modal-ja').innerText)">🔊 播放日文語音</button>
+      <button class="btn-add" id="btn-modal-speech" style="margin-bottom:8px;" onclick="triggerSpeech(document.getElementById('modal-ja').innerText)">🔊 播放日文語音</button>
       <button class="btn-close-modal" onclick="closeBigModal()">關閉 Close</button>
     </div>
   </div>
@@ -1407,66 +1467,99 @@
     };
 
     let activeDay = 1;
-    let rate = parseFloat(localStorage.getItem('fk_custom_rate')) || 0.2150;
+    let liveFetchedRate = 0.2150;
+    let rate = 0.2150;
     let records = JSON.parse(localStorage.getItem('fk_records')) || [];
     let completed = JSON.parse(localStorage.getItem('fk_done_tasks')) || {};
     let customItinerary = JSON.parse(localStorage.getItem('fk_custom_itinerary')) || JSON.parse(JSON.stringify(defaultItinerary));
 
+    // 專屬預設憑證資料（直接硬編碼，任一手機開啟皆完全同步）
     let walletData = JSON.parse(localStorage.getItem('fk_wallet_data')) || {
-      flightPnr: "預約確認後填入",
-      hotelCode: "預約確認後填入",
-      insCode: "保單確認後填入",
-      insPhone: "+886-2-XXXX-XXXX"
+      flightPnr: "EJABM6",
+      hotelConfirm: "RYa0ngw55e",
+      hotelPin: "6919",
+      hotelOrder: "1616333867909966"
     };
 
+    // 專屬雲端硬碟與相簿連結
     let cloudData = JSON.parse(localStorage.getItem('fk_cloud_data')) || {
-      driveUrl: "https://drive.google.com",
-      photoUrl: "https://photos.google.com"
+      driveUrl: "https://drive.google.com/drive/folders/1H4iyt0DRihlnc6TO2D53mQyz0qC6JPlM?usp=drive_link",
+      photoUrl: "https://drive.google.com/drive/folders/1ob-LnFy4P8SHY4ELd-ib_wPybvFpb_Bv?usp=drive_link"
     };
 
     let taxMode = 'ex';
     let taxRateVal = 0.10;
+    let isCustomRateMode = false;
     let currentTranslatedJa = "";
     let currentInputZh = "";
     let activePhraseCat = 'dining';
 
-    // 初始載入日曆與匯率展示
+    // 語音引擎初始化（確保 iOS 語音就緒）
+    let synthVoices = [];
+    function initSpeechEngine() {
+      if ('speechSynthesis' in window) {
+        synthVoices = window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+          synthVoices = window.speechSynthesis.getVoices();
+        };
+      }
+    }
+    initSpeechEngine();
+
+    // 頁面預設日期
     const today = new Date();
     document.getElementById('k-date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    document.getElementById('user-custom-rate').value = rate.toFixed(4);
-    document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
 
-    // 取得即時匯率
+    // 自動取得即時匯率
     async function fetchLiveExchangeRate() {
       try {
         const res = await fetch('https://open.er-api.com/v6/latest/JPY');
         const data = await res.json();
         if (data && data.rates && data.rates.TWD) {
-          const liveRate = data.rates.TWD;
-          document.getElementById('live-api-rate').innerText = `1 JPY ≈ ${liveRate.toFixed(4)} TWD`;
-          if (!localStorage.getItem('fk_custom_rate')) {
-            updateCustomRate(liveRate);
+          liveFetchedRate = data.rates.TWD;
+          document.getElementById('live-api-rate').innerText = `1 JPY ≈ ${liveFetchedRate.toFixed(4)} TWD`;
+          
+          const savedCustom = localStorage.getItem('fk_custom_rate');
+          if (savedCustom) {
+            rate = parseFloat(savedCustom);
+          } else {
+            rate = liveFetchedRate;
           }
+          applyRateDisplay();
         }
       } catch (e) {
+        liveFetchedRate = 0.2150;
         document.getElementById('live-api-rate').innerText = `1 JPY ≈ 0.2150 TWD (離線基準)`;
+        rate = parseFloat(localStorage.getItem('fk_custom_rate')) || 0.2150;
+        applyRateDisplay();
       }
     }
-    fetchLiveExchangeRate();
+
+    function applyRateDisplay() {
+      document.getElementById('user-custom-rate').value = rate.toFixed(4);
+      document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
+      runTaxCalc();
+      drawRecords();
+    }
 
     function updateCustomRate(val) {
       const parsed = parseFloat(val);
       if (!isNaN(parsed) && parsed > 0) {
         rate = parsed;
         localStorage.setItem('fk_custom_rate', rate);
-        document.getElementById('user-custom-rate').value = rate.toFixed(4);
-        document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
-        runTaxCalc();
-        drawRecords();
+        applyRateDisplay();
       }
     }
 
-    // 日本時鐘
+    function resetToLiveRate() {
+      rate = liveFetchedRate;
+      localStorage.removeItem('fk_custom_rate');
+      applyRateDisplay();
+    }
+
+    fetchLiveExchangeRate();
+
+    // 福岡時區時鐘
     function updateFukuokaClock() {
       const clockEl = document.getElementById('live-clock');
       if (!clockEl) return;
@@ -1490,7 +1583,7 @@
     updateFukuokaClock();
     setInterval(updateFukuokaClock, 1000);
 
-    // 天氣
+    // 即時天氣
     async function fetchWeather() {
       try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
@@ -1548,7 +1641,7 @@
     }
     function closeImageModal() { document.getElementById('imgModal').classList.remove('active'); }
 
-    // 行程管理
+    // 行程渲染與觸控拖曳
     function parseTimeToMinutes(t) {
       if (!t) return 9999;
       const m = t.match(/(\d{1,2}):(\d{2})/);
@@ -1694,37 +1787,40 @@
       }
     }
 
-    // 憑證 Wallet
+    // 憑證 Wallet 渲染與編輯
     function renderWalletView() {
-      document.getElementById('w-flight-pnr').innerText = walletData.flightPnr || '尚未設定';
-      document.getElementById('w-hotel-code').innerText = walletData.hotelCode || '尚未設定';
-      document.getElementById('w-ins-code').innerText = walletData.insCode || '尚未填寫';
-      document.getElementById('w-ins-phone').innerText = walletData.insPhone || '+886-2-XXXX-XXXX';
+      document.getElementById('w-flight-pnr').innerText = walletData.flightPnr || 'EJABM6';
+      document.getElementById('w-hotel-confirm').innerText = walletData.hotelConfirm || 'RYa0ngw55e';
+      document.getElementById('w-hotel-pin').innerText = walletData.hotelPin || '6919';
+      document.getElementById('w-hotel-order').innerText = walletData.hotelOrder || '1616333867909966';
     }
 
     function editWalletItem(type) {
       document.getElementById('edit-wallet-type').value = type;
-      const input = document.getElementById('wallet-input-val');
-      const lbl = document.getElementById('wallet-input-lbl');
+      document.getElementById('wallet-inputs-flight').style.display = type === 'flight' ? 'block' : 'none';
+      document.getElementById('wallet-inputs-hotel').style.display = type === 'hotel' ? 'block' : 'none';
+
       if (type === 'flight') {
-        lbl.innerText = '長榮航班訂位代號 (PNR)';
-        input.value = walletData.flightPnr || '';
+        document.getElementById('wallet-modal-title').innerText = '編輯航班訂位代號';
+        document.getElementById('wallet-input-pnr').value = walletData.flightPnr || 'EJABM6';
       } else if (type === 'hotel') {
-        lbl.innerText = '微笑飯店預約編號';
-        input.value = walletData.hotelCode || '';
-      } else if (type === 'insurance') {
-        lbl.innerText = '海外旅平險保單號';
-        input.value = walletData.insCode || '';
+        document.getElementById('wallet-modal-title').innerText = '編輯飯店入住憑證';
+        document.getElementById('wallet-input-confirm').value = walletData.hotelConfirm || 'RYa0ngw55e';
+        document.getElementById('wallet-input-pin').value = walletData.hotelPin || '6919';
+        document.getElementById('wallet-input-order').value = walletData.hotelOrder || '1616333867909966';
       }
       document.getElementById('walletModal').classList.add('active');
     }
 
     function saveWalletItem() {
       const type = document.getElementById('edit-wallet-type').value;
-      const val = document.getElementById('wallet-input-val').value.trim();
-      if (type === 'flight') walletData.flightPnr = val;
-      if (type === 'hotel') walletData.hotelCode = val;
-      if (type === 'insurance') walletData.insCode = val;
+      if (type === 'flight') {
+        walletData.flightPnr = document.getElementById('wallet-input-pnr').value.trim() || 'EJABM6';
+      } else if (type === 'hotel') {
+        walletData.hotelConfirm = document.getElementById('wallet-input-confirm').value.trim() || 'RYa0ngw55e';
+        walletData.hotelPin = document.getElementById('wallet-input-pin').value.trim() || '6919';
+        walletData.hotelOrder = document.getElementById('wallet-input-order').value.trim() || '1616333867909966';
+      }
       localStorage.setItem('fk_wallet_data', JSON.stringify(walletData));
       closeWalletModal();
       renderWalletView();
@@ -1732,7 +1828,7 @@
 
     function closeWalletModal() { document.getElementById('walletModal').classList.remove('active'); }
 
-    // 採買計算機 & 記帳
+    // 採買退稅試算機
     function setTaxMode(m) {
       taxMode = m;
       document.getElementById('btn-tax-ex').classList.toggle('active', m === 'ex');
@@ -1740,10 +1836,30 @@
       runTaxCalc();
     }
 
-    function setTaxRate(r) {
+    function setTaxRatePreset(r) {
+      isCustomRateMode = false;
       taxRateVal = r;
       document.getElementById('btn-rate-10').classList.toggle('active', r === 0.10);
       document.getElementById('btn-rate-8').classList.toggle('active', r === 0.08);
+      document.getElementById('btn-rate-custom').classList.remove('active');
+      document.getElementById('custom-rate-box').classList.remove('active');
+      runTaxCalc();
+    }
+
+    function toggleCustomRateInput() {
+      isCustomRateMode = true;
+      document.getElementById('btn-rate-10').classList.remove('active');
+      document.getElementById('btn-rate-8').classList.remove('active');
+      document.getElementById('btn-rate-custom').classList.add('active');
+      document.getElementById('custom-rate-box').classList.add('active');
+      const val = parseFloat(document.getElementById('custom-rate-val').value);
+      if (!isNaN(val)) taxRateVal = val / 100;
+      runTaxCalc();
+    }
+
+    function applyCustomRateVal(val) {
+      const p = parseFloat(val);
+      taxRateVal = (!isNaN(p) && p >= 0) ? p / 100 : 0;
       runTaxCalc();
     }
 
@@ -1849,7 +1965,7 @@
         html += `
           <div class="date-group">
             <div class="date-group-header">
-              <span class="date-title">🗓️ ${dateKey}</span>
+              <span class="date-title">🗓️️ ${dateKey}</span>
               <span class="date-subtotal">小計 NT$ ${subTwd.toLocaleString()} (¥ ${subJpy.toLocaleString()})</span>
             </div>
             ${items.map(it => `
@@ -1873,39 +1989,17 @@
       box.innerHTML = html;
     }
 
-    // 雲端硬碟原生 App 喚醒邏輯
-    function renderCloudView() {}
-
-    function openCloudApp(type) {
-      const url = type === 'drive' ? (cloudData.driveUrl || "https://drive.google.com") : (cloudData.photoUrl || "https://photos.google.com");
-      
-      // 判斷是否為 Google Drive 或 Google Photos 進行專屬 scheme 嘗試喚醒
-      let appScheme = "";
-      if (type === 'drive' && url.includes('drive.google.com')) {
-        appScheme = "googledrive://";
-      } else if (type === 'photo' && url.includes('photos.google.com')) {
-        appScheme = "googlephotos://";
-      }
-
-      if (appScheme) {
-        // 先嘗試使用 Scheme 開啟 App，若未安裝則在延遲後打開網頁
-        const start = Date.now();
-        window.location.href = appScheme;
-        setTimeout(() => {
-          if (Date.now() - start < 1500) {
-            window.open(url, '_blank');
-          }
-        }, 600);
-      } else {
-        window.open(url, '_blank');
-      }
+    // 雲端硬碟
+    function renderCloudView() {
+      document.getElementById('cloud-link-drive').href = cloudData.driveUrl;
+      document.getElementById('cloud-link-photo').href = cloudData.photoUrl;
     }
 
     function editCloudLink(type) {
       document.getElementById('edit-cloud-type').value = type;
       const input = document.getElementById('cloud-input-url');
       document.getElementById('cloud-modal-title').innerText = type === 'drive' ? '設定旅行資料庫網址' : '設定共享相簿網址';
-      input.value = type === 'drive' ? (cloudData.driveUrl || '') : (cloudData.photoUrl || '');
+      input.value = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
       document.getElementById('cloudModal').classList.add('active');
     }
 
@@ -1919,46 +2013,37 @@
       else cloudData.photoUrl = url;
       localStorage.setItem('fk_cloud_data', JSON.stringify(cloudData));
       closeCloudModal();
+      renderCloudView();
     }
 
     function closeCloudModal() { document.getElementById('cloudModal').classList.remove('active'); }
 
     function copyCloudLink(type) {
       const url = type === 'drive' ? cloudData.driveUrl : cloudData.photoUrl;
-      copyText(url || 'https://drive.google.com');
+      copyText(url);
     }
 
-    // 翻譯與音訊靜音穿透播放
-    let activeAudio = null;
-
-    function playSpeechSafely(text) {
+    // 翻譯與純原生 Web Speech API（解決 iOS 發聲與靜音問題）
+    function triggerSpeech(text) {
       if (!text) return;
-
-      // 優先使用 HTML5 Audio 串流（在 iOS 上走媒體音訊通道，靜音模式下戴耳機或調音量可直接發聲）
-      try {
-        if (activeAudio) {
-          activeAudio.pause();
-          activeAudio = null;
-        }
-        const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ja&client=tw-ob&q=${encodeURIComponent(text)}`;
-        activeAudio = new Audio(audioUrl);
-        activeAudio.play().catch(err => {
-          // 若串流受阻，平滑降級調用系統 TTS
-          if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'ja-JP';
-            window.speechSynthesis.speak(u);
-          }
-        });
-      } catch (e) {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'ja-JP';
-          window.speechSynthesis.speak(u);
-        }
+      if (!('speechSynthesis' in window)) {
+        alert('您的瀏覽器不支援語音播放功能！');
+        return;
       }
+
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 0.9;
+
+      if (!synthVoices.length) {
+        synthVoices = window.speechSynthesis.getVoices();
+      }
+      const jaVoice = synthVoices.find(v => v.lang === 'ja-JP' || v.lang.includes('ja') || v.lang.includes('JP'));
+      if (jaVoice) utterance.voice = jaVoice;
+
+      window.speechSynthesis.speak(utterance);
     }
 
     function pickPhraseCat(c, el) {
@@ -2000,23 +2085,23 @@
       }
     }
 
-    function speakCurrentText() { playSpeechSafely(currentTranslatedJa); }
+    function speakCurrentText() { triggerSpeech(currentTranslatedJa); }
     function showBigModalCurrent() { openBigModal(currentTranslatedJa, currentInputZh); }
 
     function openBigModal(ja, zh) {
       document.getElementById('modal-ja').innerText = ja;
       document.getElementById('modal-zh').innerText = zh;
       document.getElementById('bigModal').classList.add('active');
-      playSpeechSafely(ja);
+      triggerSpeech(ja);
     }
     function closeBigModal() { 
       document.getElementById('bigModal').classList.remove('active'); 
-      if (activeAudio) activeAudio.pause();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     }
 
     function copyText(txt) {
       if (!txt) return;
-      navigator.clipboard.writeText(txt).then(() => alert(`已複製到剪貼簿：${txt}`)).catch(() => {
+      navigator.clipboard.writeText(txt).then(() => alert(`已複製：${txt}`)).catch(() => {
         const t = document.createElement("textarea");
         t.value = txt;
         document.body.appendChild(t);
@@ -2027,7 +2112,7 @@
       });
     }
 
-    // 匯出功能
+    // 匯出報表
     async function exportStyledExcel() {
       if (!records.length) return alert('無記帳資料');
       const wb = new ExcelJS.Workbook();
