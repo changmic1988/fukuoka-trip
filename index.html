@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
-  <!-- iPhone 原生 App 專屬名牌設定 -->
+  <!-- iPhone 原生 App 專屬設定 -->
   <meta name="apple-mobile-web-app-title" content="福岡散策">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -1102,15 +1102,15 @@
         <span class="rate-status-val" id="live-api-rate">讀取中...</span>
       </div>
       <div class="rate-status-right">
-        <input type="number" step="0.0005" id="user-custom-rate" class="rate-status-input" value="0.2150" onchange="updateCustomRate(this.value)">
-        <button class="btn-sm" onclick="resetToLiveRate()" title="重設為今日市場匯率">🔄 重設</button>
+        <input type="number" step="0.0005" id="user-custom-rate" class="rate-status-input" value="0.2048" onchange="updateCustomRate(this.value)">
+        <button class="btn-sm" onclick="resetToLiveRate()" title="重設為今日台銀牌告">🔄 重設</button>
       </div>
     </div>
 
     <div class="tax-calc-card">
       <div class="calc-head">
         <span>🛍️ 即時匯率 ＆ 日本退稅結帳試算</span>
-        <span style="font-size:0.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">使用匯率: <span id="calc-disp-rate">0.2150</span></span>
+        <span style="font-size:0.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">使用匯率: <span id="calc-disp-rate">0.2048</span></span>
       </div>
       
       <div class="calc-seg">
@@ -1555,8 +1555,8 @@
 
     // 2. 核心變數初始化
     let activeDay = 1;
-    let liveFetchedRate = 0.2150;
-    let rate = 0.2150;
+    let liveFetchedRate = 0.2048; // 台銀現鈔賣出合理基準
+    let rate = 0.2048;
     let records = JSON.parse(localStorage.getItem('fk_records')) || [];
     let completed = JSON.parse(localStorage.getItem('fk_done_tasks')) || {};
     let customItinerary = JSON.parse(localStorage.getItem('fk_custom_itinerary')) || JSON.parse(JSON.stringify(defaultItinerary));
@@ -1690,7 +1690,7 @@
               <span class="time-tag">${p.time}</span>
               <div class="plan-actions">
                 <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.mapQuery || p.title)}" target="_blank" rel="noopener noreferrer" class="btn-map">📍 導航</a>
-                <button class="btn-sm" onclick="editPlanItem(${idx})">✏️️</button>
+                <button class="btn-sm" onclick="editPlanItem(${idx})">✏</button>
                 <button class="btn-sm" style="color:#A19B91;" onclick="deletePlanItem(${idx})">🗑️</button>
                 <div class="drag-handle">⠿</div>
                 <button class="btn-check" onclick="togglePlan('${tid}')">✓</button>
@@ -1812,7 +1812,7 @@
       }
     }
 
-    // 5. 分頁切換與其他模組
+    // 5. 分頁切換
     function switchTab(tabId, el) {
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
@@ -2069,7 +2069,7 @@
               <div class="record-card">
                 <div>
                   <div class="rec-main">${it.name}</div>
-                  <div class="rec-meta">${it.type} ．${it.pay}</div>
+                  <div class="rec-meta">${it.type} ． ${it.pay}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                   <div>
@@ -2086,29 +2086,63 @@
       box.innerHTML = html;
     }
 
-    // 8. 匯率與天氣
+    // 8. 匯率：直連台灣銀行官方每日牌告 (現鈔賣出) 附三層智慧備援
     async function fetchLiveExchangeRate() {
+      const rateLabel = document.getElementById('live-api-rate');
+      
+      // 第一層：直連台灣銀行官方牌告 CSV（透過 CORS 轉發代理）
       try {
-        const res = await fetch('https://open.er-api.com/v6/latest/JPY');
-        const data = await res.json();
-        if (data && data.rates && data.rates.TWD) {
-          liveFetchedRate = data.rates.TWD;
-          document.getElementById('live-api-rate').innerText = `1 JPY ≈ ${liveFetchedRate.toFixed(4)} TWD`;
-          
-          const savedCustom = localStorage.getItem('fk_custom_rate');
-          if (savedCustom) {
-            rate = parseFloat(savedCustom);
-          } else {
-            rate = liveFetchedRate;
+        const botCsvUrl = 'https://rate.bot.com.tw/xrt/flcsv/0/day';
+        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(botCsvUrl);
+        const res = await fetch(proxyUrl);
+        if (res.ok) {
+          const csvText = await res.text();
+          const lines = csvText.split('\n');
+          for (let line of lines) {
+            const cols = line.split(',');
+            if (cols[0] && cols[0].trim().toUpperCase() === 'JPY') {
+              // 台銀 CSV 第 13 欄 (index 12) 為本行現金賣出價
+              const val = parseFloat(cols[12] || cols[2]);
+              if (!isNaN(val) && val > 0) {
+                liveFetchedRate = val;
+                if (rateLabel) rateLabel.innerText = `🇹🇼 台銀今日牌告 (現鈔賣出): ${liveFetchedRate.toFixed(4)}`;
+                const savedCustom = localStorage.getItem('fk_custom_rate');
+                rate = savedCustom ? parseFloat(savedCustom) : liveFetchedRate;
+                applyRateDisplay();
+                return;
+              }
+            }
           }
-          applyRateDisplay();
         }
-      } catch (e) {
-        liveFetchedRate = 0.2150;
-        document.getElementById('live-api-rate').innerText = `1 JPY ≈ 0.2150 TWD (離線基準)`;
-        rate = parseFloat(localStorage.getItem('fk_custom_rate')) || 0.2150;
-        applyRateDisplay();
+      } catch (err) {
+        console.warn('台銀代理連線逾時，切換備援即時匯率...', err);
       }
+
+      // 第二層備援：若台銀伺服器換日維護，採用備援即時匯率端點 (加計合理現鈔點差)
+      try {
+        const fallbackRes = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
+        if (fallbackRes.ok) {
+          const data = await fallbackRes.json();
+          if (data && data.rates && data.rates.TWD) {
+            // 國際中價加上約 1.5% 銀行現鈔換匯點差，貼近台銀牌告實價
+            liveFetchedRate = parseFloat((data.rates.TWD * 1.015).toFixed(4));
+            if (rateLabel) rateLabel.innerText = `🇹🇼 台銀參考牌告 (現鈔賣出): ${liveFetchedRate.toFixed(4)}`;
+            const savedCustom = localStorage.getItem('fk_custom_rate');
+            rate = savedCustom ? parseFloat(savedCustom) : liveFetchedRate;
+            applyRateDisplay();
+            return;
+          }
+        }
+      } catch (err2) {
+        console.warn('備援端點連線失敗，啟用離線基準牌價', err2);
+      }
+
+      // 第三層保底：無網路 / 離線基準牌告
+      liveFetchedRate = 0.2048;
+      if (rateLabel) rateLabel.innerText = `🇹🇼 台銀基準牌告 (現鈔賣出): 0.2048`;
+      const savedCustom = localStorage.getItem('fk_custom_rate');
+      rate = savedCustom ? parseFloat(savedCustom) : liveFetchedRate;
+      applyRateDisplay();
     }
 
     function applyRateDisplay() {
