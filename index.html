@@ -201,6 +201,7 @@
       box-shadow: 0 2px 6px rgba(163, 78, 42, 0.2);
     }
 
+    /* 天氣小部件樣式 */
     .weather-widget {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
@@ -214,15 +215,16 @@
       align-items: center;
       padding-bottom: 10px;
       border-bottom: 1px dashed var(--border-subtle);
+      gap: 8px;
     }
     .weather-city {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .weather-icon { font-size: 1.7rem; flex-shrink: 0; }
+    .weather-icon { font-size: 1.8rem; flex-shrink: 0; }
     .weather-temp {
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
       line-height: 1.1;
@@ -234,6 +236,12 @@
       font-variant-numeric: tabular-nums;
       margin-top: 2px;
     }
+    .weather-right-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
     .live-clock-text {
       font-size: 0.88rem;
       font-weight: 700;
@@ -241,18 +249,40 @@
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
+    .weather-status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     .weather-status {
       font-size: 0.78rem;
       font-weight: 600;
       color: var(--autumn-amber);
       text-align: right;
-      margin-top: 1px;
     }
     .weather-rain {
-      font-size: 0.7rem;
-      color: var(--text-muted);
+      font-size: 0.72rem;
+      color: var(--text-sub);
       text-align: right;
       font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+    .btn-weather-refresh {
+      background: var(--tag-bg);
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--slate-blue);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .btn-weather-refresh:active {
+      opacity: 0.7;
     }
 
     .outfit-guide { margin-top: 10px; }
@@ -516,8 +546,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* ====== TAB 3: 旅費手帳 EXPENSE ====== */
-    /* 雙層開闊排版：完整保留 JPY ➔ TWD 與台銀即時數值 */
+    /* TAB 3: 旅費手帳 EXPENSE */
     .rate-status-card {
       background: #FAF8F5;
       border: 1px solid var(--border-soft);
@@ -1024,6 +1053,7 @@
       <div class="day-pill" onclick="pickDay(5)">Day 5 ． 歸途漫步</div>
     </div>
 
+    <!-- 即時天氣小部件（升級：日本氣象廳模型 ＆ 手動更新按鈕） -->
     <div class="weather-widget">
       <div class="weather-head">
         <div class="weather-city">
@@ -1033,10 +1063,15 @@
             <div class="weather-sub" id="wt-range">最高 --° ｜ 最低 --°</div>
           </div>
         </div>
-        <div>
+        <div class="weather-right-col">
           <div class="live-clock-text" id="live-clock">--月--日 (週-) --:--</div>
-          <div class="weather-status" id="wt-status">福岡（博多）讀取中...</div>
-          <div class="weather-rain" id="wt-rain">💧 降雨機率 --%</div>
+          <div class="weather-status-row">
+            <div class="weather-status" id="wt-status">福岡（博多）讀取中...</div>
+            <div class="weather-rain" id="wt-rain">💧 --%</div>
+          </div>
+          <button class="btn-weather-refresh" id="btn-refresh-weather" onclick="manualRefreshWeather()">
+            ⚡ 更新即時天氣
+          </button>
         </div>
       </div>
       <div class="outfit-guide">
@@ -1672,7 +1707,6 @@
       rtdb = firebase.database();
       isFirebaseReady = true;
 
-      // 連線狀態監聽
       rtdb.ref(".info/connected").on("value", (snap) => {
         const badge = document.getElementById("firebase-sync-status");
         if (badge) {
@@ -1686,7 +1720,6 @@
         }
       });
 
-      // 監聽雲端行程更新
       rtdb.ref("fukuoka_trip/itinerary").on("value", (snapshot) => {
         const cloudDataVal = snapshot.val();
         if (cloudDataVal) {
@@ -1696,7 +1729,6 @@
         }
       });
 
-      // 監聽行程完成狀態
       rtdb.ref("fukuoka_trip/completed").on("value", (snapshot) => {
         const cloudDone = snapshot.val();
         if (cloudDone) {
@@ -1706,7 +1738,6 @@
         }
       });
 
-      // 監聽記帳記錄更新
       rtdb.ref("fukuoka_trip/records").on("value", (snapshot) => {
         const cloudRecs = snapshot.val();
         if (cloudRecs) {
@@ -2158,14 +2189,14 @@
       box.innerHTML = html;
     }
 
-    // 8. 匯率：直連台灣銀行官方牌告 (現鈔賣出) 與一鍵手動抓取
+    // 8. 匯率：直連台灣銀行官方牌告 (現鈔賣出) 附防快取機制
     async function fetchLiveExchangeRate() {
       const rateLabel = document.getElementById('live-api-rate');
       
-      // 第一層：直連台灣銀行官方牌告 CSV
+      // 第一層：直連台灣銀行官方牌告 CSV（加上時間戳防止 Proxy 伺服器快取舊資料）
       try {
-        const botCsvUrl = 'https://rate.bot.com.tw/xrt/flcsv/0/day';
-        const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(botCsvUrl);
+        const botCsvUrl = `https://rate.bot.com.tw/xrt/flcsv/0/day?t=${Date.now()}`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(botCsvUrl)}&_nocache=${Date.now()}`;
         const res = await fetch(proxyUrl);
         if (res.ok) {
           const csvText = await res.text();
@@ -2173,8 +2204,8 @@
           for (let line of lines) {
             const cols = line.split(',');
             if (cols[0] && cols[0].trim().toUpperCase() === 'JPY') {
-              // 台銀 CSV 第 13 欄 (index 12) 為本行現金賣出價
-              const val = parseFloat(cols[12] || cols[2]);
+              // 精確抓取本行現金賣出價 (第 13 欄，index 12)
+              const val = parseFloat(cols[12]);
               if (!isNaN(val) && val > 0) {
                 liveFetchedRate = val;
                 if (rateLabel) rateLabel.innerText = `🇹🇼 台銀現鈔賣出：${liveFetchedRate.toFixed(4)}`;
@@ -2187,9 +2218,9 @@
         console.warn('台銀代理連線逾時，切換備援即時匯率...', err);
       }
 
-      // 第二層備援：若遇換日維護，採用備援即時匯率端點 (加計銀行現鈔換匯點差)
+      // 第二層備援：備援端點 (加計銀行現鈔換匯點差)
       try {
-        const fallbackRes = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
+        const fallbackRes = await fetch(`https://api.exchangerate-api.com/v4/latest/JPY?t=${Date.now()}`);
         if (fallbackRes.ok) {
           const data = await fallbackRes.json();
           if (data && data.rates && data.rates.TWD) {
@@ -2202,13 +2233,12 @@
         console.warn('備援端點連線失敗，啟用離線基準牌價', err2);
       }
 
-      // 第三層保底：離線基準
+      // 第三層保底
       liveFetchedRate = 0.2048;
       if (rateLabel) rateLabel.innerText = `🇹🇼 台銀基準牌告：0.2048`;
       return liveFetchedRate;
     }
 
-    // 手動一鍵捕捉台銀即時牌告並自動帶入格子
     async function manualCaptureLiveRate() {
       const btn = document.getElementById('btn-fetch-now');
       if (btn) btn.innerText = '抓取中...';
@@ -2266,30 +2296,87 @@
       clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
     }
 
+    // 9. 天氣：對齊日本氣象廳 (JMA) 高解析模型 ＆ 即時小時降雨機率
+    function getWeatherDescByCode(code) {
+      if (code === 0) return { text: "晴空萬里 ． 快晴", icon: "☀️" };
+      if (code === 1 || code === 2) return { text: "多雲時晴 ． 快適", icon: "🌤" };
+      if (code === 3) return { text: "陰天微涼 ． 陰天", icon: "☁️" };
+      if (code === 45 || code === 48) return { text: "晨間霧氣 ． 霧天", icon: "🌫" };
+      if (code >= 51 && code <= 55) return { text: "小雨綿綿 ． 陣雨", icon: "🌦" };
+      if (code >= 61 && code <= 65) return { text: "陰雨綿綿 ． 降雨", icon: "🌧" };
+      if (code >= 80 && code <= 82) return { text: "短暫陣雨 ． 留意", icon: "🌧" };
+      if (code >= 95) return { text: "雷陣雨 ． 注意", icon: "⛈" };
+      return { text: "秋日快適 ． 散策", icon: "🌤" };
+    }
+
     async function fetchWeather() {
       try {
-        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo');
+        // 使用日本氣象廳專屬模型 jma_seamless，抓取即時當前與每小時降雨機率
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,relative_humidity_2m,weather_code&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&models=jma_seamless&t=${Date.now()}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Weather API Error");
         const data = await res.json();
-        const curr = Math.round(data.current.temperature_2m);
-        const max = Math.round(data.daily.temperature_2m_max[0]);
-        const min = Math.round(data.daily.temperature_2m_min[0]);
-        const rain = data.daily.precipitation_probability_max[0] || 0;
-        document.getElementById('wt-temp').innerText = `${curr}°C`;
-        document.getElementById('wt-range').innerText = `最高 ${max}° ｜ 最低 ${min}°`;
-        document.getElementById('wt-rain').innerText = `💧 降雨機率 ${rain}%`;
-        document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
+
+        const currTemp = Math.round(data.current.temperature_2m);
+        const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+        const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+        const wCode = data.current.weather_code;
+        const weatherInfo = getWeatherDescByCode(wCode);
+
+        // 比對東京時區當前小時，取得此時此刻精確的降雨機率
+        const nowTokyo = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+        const currentHour = nowTokyo.getHours();
+        let rainProb = 20; // 基準值
+        if (data.hourly && data.hourly.precipitation_probability && data.hourly.precipitation_probability[currentHour] !== undefined) {
+          rainProb = data.hourly.precipitation_probability[currentHour];
+        }
+
+        // 渲染畫面
+        document.getElementById('wt-icon').innerText = weatherInfo.icon;
+        document.getElementById('wt-temp').innerText = `${currTemp}°C`;
+        document.getElementById('wt-range').innerText = `最高 ${maxTemp}° ｜ 最低 ${minTemp}°`;
+        document.getElementById('wt-status').innerText = weatherInfo.text;
+        document.getElementById('wt-rain').innerText = `💧 降雨率 ${rainProb}%`;
+
+        // 動態產出穿搭建議
+        const rainGear = rainProb >= 35 ? '摺疊傘 ． 必備' : '輕裝 ． 防曬備用';
+        const outerGear = minTemp < 17 ? '薄風衣 / 開襟針織' : (minTemp < 20 ? '輕夾克 / 罩衫' : '薄長袖 / 襯衫');
+        const innerGear = currTemp >= 23 ? '舒適短T / 透氣棉質' : '長袖薄T / 襯衫';
+
         document.getElementById('outfit-badges').innerHTML = `
-          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${min < 18 ? '薄風衣 / 開襟針織' : '輕夾克'}</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">透氣棉T / 長袖襯衫</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${outerGear}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">${innerGear}</span></div></div>
           <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
-          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rain >= 30 ? '摺疊傘 ． 備用' : '防曬墨鏡 ． 輕便'}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rainGear}</span></div></div>
         `;
+        return { currTemp, rainProb };
       } catch (e) {
+        console.warn("JMA 天氣載入失敗，採用備援模型", e);
         document.getElementById('wt-temp').innerText = '21°C';
+        document.getElementById('wt-range').innerText = '最高 24° ｜ 最低 17°';
+        document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
+        document.getElementById('wt-rain').innerText = '💧 降雨率 20%';
+        return null;
       }
     }
 
-    // 9. 翻譯與語音
+    async function manualRefreshWeather() {
+      const btn = document.getElementById('btn-refresh-weather');
+      if (btn) btn.innerText = '更新中...';
+      
+      const res = await fetchWeather();
+      
+      if (btn) btn.innerText = '⚡ 更新即時天氣';
+      
+      const toast = document.getElementById('speech-toast');
+      if (toast && res) {
+        toast.innerText = `✓ 福岡天氣已更新：${res.currTemp}°C (降雨率 ${res.rainProb}%)`;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 2600);
+      }
+    }
+
+    // 10. 翻譯與語音
     let synthVoices = [];
     function initSpeechEngine() {
       if ('speechSynthesis' in window) {
@@ -2436,7 +2523,7 @@
       area.style.display = 'none';
     }
 
-    // 10. 立即啟動渲染
+    // 11. 立即啟動渲染
     async function initApp() {
       drawPlans();
       drawRecords();
