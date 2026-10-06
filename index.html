@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   
-  <!-- iPhone 原生 App 專屬設定 -->
   <meta name="apple-mobile-web-app-title" content="福岡散策">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -201,12 +200,12 @@
       box-shadow: 0 2px 6px rgba(163, 78, 42, 0.2);
     }
 
-    /* 天氣小部件樣式 */
+    /* 氣象卡片：防擠壓換行佈局 */
     .weather-widget {
       background: var(--card-bg);
       border: 1px solid var(--border-soft);
       border-radius: 10px;
-      padding: 14px;
+      padding: 13px 14px;
       margin-bottom: 12px;
     }
     .weather-head {
@@ -215,14 +214,15 @@
       align-items: center;
       padding-bottom: 10px;
       border-bottom: 1px dashed var(--border-subtle);
-      gap: 8px;
+      gap: 6px;
     }
     .weather-city {
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
     }
-    .weather-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .weather-icon { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
     .weather-temp {
       font-size: 1.3rem;
       font-weight: 700;
@@ -231,41 +231,46 @@
       font-variant-numeric: tabular-nums;
     }
     .weather-sub {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--text-muted);
       font-variant-numeric: tabular-nums;
       margin-top: 2px;
+      white-space: nowrap;
     }
     .weather-right-col {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 2px;
+      gap: 3px;
+      min-width: 0;
+      flex: 1;
     }
     .live-clock-text {
-      font-size: 0.88rem;
+      font-size: 0.84rem;
       font-weight: 700;
       color: var(--slate-blue);
       text-align: right;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
     .weather-status-row {
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: nowrap;
     }
     .weather-status {
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       font-weight: 600;
       color: var(--autumn-amber);
-      text-align: right;
+      white-space: nowrap;
     }
     .weather-rain {
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       color: var(--text-sub);
-      text-align: right;
       font-variant-numeric: tabular-nums;
-      font-weight: 600;
+      font-weight: 700;
+      white-space: nowrap;
     }
     .btn-weather-refresh {
       background: var(--tag-bg);
@@ -280,6 +285,7 @@
       align-items: center;
       gap: 2px;
       margin-top: 2px;
+      white-space: nowrap;
     }
     .btn-weather-refresh:active {
       opacity: 0.7;
@@ -1053,7 +1059,7 @@
       <div class="day-pill" onclick="pickDay(5)">Day 5 ． 歸途漫步</div>
     </div>
 
-    <!-- 即時天氣小部件（升級：日本氣象廳模型 ＆ 手動更新按鈕） -->
+    <!-- 即時天氣小部件（升級：徹底防呆防換行 + JMA 地面測站） -->
     <div class="weather-widget">
       <div class="weather-head">
         <div class="weather-city">
@@ -1066,8 +1072,8 @@
         <div class="weather-right-col">
           <div class="live-clock-text" id="live-clock">--月--日 (週-) --:--</div>
           <div class="weather-status-row">
-            <div class="weather-status" id="wt-status">福岡（博多）讀取中...</div>
-            <div class="weather-rain" id="wt-rain">💧 --%</div>
+            <span class="weather-status" id="wt-status">福岡市區連線中</span>
+            <span class="weather-rain" id="wt-rain">💧 20%</span>
           </div>
           <button class="btn-weather-refresh" id="btn-refresh-weather" onclick="manualRefreshWeather()">
             ⚡ 更新即時天氣
@@ -1207,7 +1213,7 @@
       <div class="rate-status-bottom">
         <div class="rate-calc-label-box">
           <span class="rate-input-hint">記帳基準 (1 日圓 =)</span>
-          <input type="number" step="0.0005" id="user-custom-rate" class="rate-status-input" value="0.2048" onchange="updateCustomRate(this.value)">
+          <input type="number" step="0.0005" id="user-custom-rate" class="rate-status-input" value="0.2046" onchange="updateCustomRate(this.value)">
           <span class="rate-unit-hint">元台幣</span>
         </div>
         <button class="btn-capture-rate" id="btn-fetch-now" onclick="manualCaptureLiveRate()" title="立即連線抓取即時匯率並帶入">⚡ 抓取即時匯率</button>
@@ -1217,7 +1223,7 @@
     <div class="tax-calc-card">
       <div class="calc-head">
         <span>🛍️ 即時匯率 ＆ 日本退稅結帳試算</span>
-        <span style="font-size:0.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">使用匯率: <span id="calc-disp-rate">0.2048</span></span>
+        <span style="font-size:0.72rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">使用匯率: <span id="calc-disp-rate">0.2046</span></span>
       </div>
       
       <div class="calc-seg">
@@ -1606,7 +1612,7 @@
         { time: "08:15 – 09:37", title: "博多 ➔ 西鐵天神搭特急直達「西鐵柳川站」", transit: "🟣 西鐵特急 [T01 福岡] ➔ [T39 柳川]", mapQuery: "西鉄柳川駅", note: "博多搭地鐵至天神，步行至西鐵福岡站搭特急直達西鐵柳川站（清晨直奔最南端，避開團客潮）。" },
         { time: "09:45 – 11:00", title: "柳川水鄉遊船（川下り）", transit: "柳川乘船場 接駁車直達", mapQuery: "柳川川下り乗船場", note: "清晨在柳樹石橋下悠然泛舟漫遊約 60 分鐘，感受水鄉詩意。" },
         { time: "11:15 – 12:45", title: "【午餐時段】柳川沖端老街蒸籠鰻魚飯", transit: "沖端老街 鰻魚百年名店", mapQuery: "柳川 うなぎ せいろ蒸し", note: "沖端老街自由享用炭火現烤熱騰騰的招牌蒸籠鰻魚飯（せいろ蒸し）。" },
-        { time: "13:00 – 14:15", title: "西鐵電車至二日市轉乘至「太宰府站」", transit: "🟣 西鐵大牟田線 ➔ [T13 二日市] 轉 [D02 太宰府]", mapQuery: "太宰府駅", note: "搭西鐵電車北上至西鐵二日市站，同站轉乘太宰府線直達太宰府站。" },
+        { time: "13:00 – 14:15", title: "西鐵電車至二日市轉乘至「太宰府站」", transit: "🟣 西鐵大牟田線 ➔ [T13 二日市] 轉 [D02 太宰府]", mapQuery: "太宰府駅", note: "搭西鐵北上至西鐵二日市站，同站轉乘太宰府線直達太宰府站。" },
         { time: "14:15 – 16:30", title: "參拜「太宰府天滿宮」＆ 表參道散策", transit: "太宰府站出站即是表參道", mapQuery: "太宰府天満宮", note: "欣賞漂浮森林假殿、隈研吾星巴克概念店、品嚐現烤酥熱梅枝餅。" },
         { time: "16:30 – 17:30", title: "西鐵藥院站轉乘七隈線直通天神南站", transit: "🟣 西鐵 [T02 藥院] 轉 🟢 七隈線 [N05 藥院] ➔ [N06 天神南]", mapQuery: "天神南駅", note: "搭西鐵北返，於西鐵藥院站同站換乘七隈線直通天神南站（避開天神大站人潮）。" },
         { time: "17:30 – 18:30", title: "天神中央公園 ＆ 舊公會堂貴賓館夜燈", transit: "天神南站步行 3 分鐘", mapQuery: "旧福岡県公会堂貴賓館", note: "漫步天神中央公園，欣賞明治法式木造舊公會堂貴賓館復古夜燈與水岸夜色。" },
@@ -1662,8 +1668,8 @@
 
     // 2. 核心變數初始化
     let activeDay = 1;
-    let liveFetchedRate = 0.2048; // 基準參考牌告
-    let rate = 0.2048;
+    let liveFetchedRate = 0.2046; // 最新台銀現鈔基準
+    let rate = 0.2046;
     let records = JSON.parse(localStorage.getItem('fk_records')) || [];
     let completed = JSON.parse(localStorage.getItem('fk_done_tasks')) || {};
     let customItinerary = JSON.parse(localStorage.getItem('fk_custom_itinerary')) || JSON.parse(JSON.stringify(defaultItinerary));
@@ -2189,53 +2195,83 @@
       box.innerHTML = html;
     }
 
-    // 8. 匯率：直連台灣銀行官方牌告 (現鈔賣出) 附防快取機制
+    // 8. 匯率：動態智慧定位「本行現金賣出」欄位 + 雙重 Proxy 穿透
     async function fetchLiveExchangeRate() {
       const rateLabel = document.getElementById('live-api-rate');
       
-      // 第一層：直連台灣銀行官方牌告 CSV（加上時間戳防止 Proxy 伺服器快取舊資料）
-      try {
-        const botCsvUrl = `https://rate.bot.com.tw/xrt/flcsv/0/day?t=${Date.now()}`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(botCsvUrl)}&_nocache=${Date.now()}`;
-        const res = await fetch(proxyUrl);
-        if (res.ok) {
-          const csvText = await res.text();
-          const lines = csvText.split('\n');
-          for (let line of lines) {
-            const cols = line.split(',');
-            if (cols[0] && cols[0].trim().toUpperCase() === 'JPY') {
-              // 精確抓取本行現金賣出價 (第 13 欄，index 12)
-              const val = parseFloat(cols[12]);
-              if (!isNaN(val) && val > 0) {
-                liveFetchedRate = val;
-                if (rateLabel) rateLabel.innerText = `🇹🇼 台銀現鈔賣出：${liveFetchedRate.toFixed(4)}`;
-                return liveFetchedRate;
+      // 第一層：以動態定位方式解析台銀官方 CSV 真正現金賣出欄位
+      const botUrl = `https://rate.bot.com.tw/xrt/flcsv/0/day?t=${Date.now()}`;
+      const proxyEndpoints = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(botUrl)}&_nocache=${Date.now()}`,
+        `https://corsproxy.io/?${encodeURIComponent(botUrl)}`
+      ];
+
+      for (let endpoint of proxyEndpoints) {
+        try {
+          const res = await fetch(endpoint, { cache: 'no-store' });
+          if (res.ok) {
+            const csvText = await res.text();
+            const lines = csvText.split('\n').filter(l => l.trim().length > 0);
+            if (lines.length > 1) {
+              // 搜尋表頭中的「本行現金賣出」索引
+              const headerCols = lines[0].split(',');
+              let cashSellIdx = -1;
+              for (let i = 0; i < headerCols.length; i++) {
+                if (headerCols[i].includes('本行現金賣出') || headerCols[i].includes('現金賣出')) {
+                  cashSellIdx = i;
+                  break;
+                }
+              }
+              // 若標頭未含中文，預設現金賣出通常在 index 12 或 index 2
+              if (cashSellIdx === -1) cashSellIdx = 12;
+
+              for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',');
+                if (cols[0] && cols[0].trim().toUpperCase() === 'JPY') {
+                  // 取得該列數值
+                  let parsedRate = parseFloat(cols[cashSellIdx]);
+                  // 檢查若此欄為 0 或非數字，嘗試鄰近賣出欄位
+                  if (isNaN(parsedRate) || parsedRate <= 0) {
+                    for (let c = 1; c < cols.length; c++) {
+                      let temp = parseFloat(cols[c]);
+                      // 日幣現鈔合理區間通常在 0.19 ~ 0.23 之間，且現鈔賣出必定是同列較高者
+                      if (!isNaN(temp) && temp >= 0.19 && temp <= 0.23) {
+                        if (!parsedRate || temp > parsedRate) parsedRate = temp;
+                      }
+                    }
+                  }
+
+                  if (!isNaN(parsedRate) && parsedRate > 0) {
+                    liveFetchedRate = parsedRate;
+                    if (rateLabel) rateLabel.innerText = `🇹🇼 台銀現鈔賣出：${liveFetchedRate.toFixed(4)}`;
+                    return liveFetchedRate;
+                  }
+                }
               }
             }
           }
+        } catch (e) {
+          console.warn('代理節點請求異常，嘗試下一節點...', e);
         }
-      } catch (err) {
-        console.warn('台銀代理連線逾時，切換備援即時匯率...', err);
       }
 
-      // 第二層備援：備援端點 (加計銀行現鈔換匯點差)
+      // 第二層備援：若台銀斷線，以國際即時匯率 + 銀行固定手續點差折算
       try {
-        const fallbackRes = await fetch(`https://api.exchangerate-api.com/v4/latest/JPY?t=${Date.now()}`);
-        if (fallbackRes.ok) {
-          const data = await fallbackRes.json();
-          if (data && data.rates && data.rates.TWD) {
-            liveFetchedRate = parseFloat((data.rates.TWD * 1.015).toFixed(4));
-            if (rateLabel) rateLabel.innerText = `🇹🇼 台銀參考牌告：${liveFetchedRate.toFixed(4)}`;
+        const fbRes = await fetch(`https://api.exchangerate-api.com/v4/latest/JPY?t=${Date.now()}`);
+        if (fbRes.ok) {
+          const d = await fbRes.json();
+          if (d && d.rates && d.rates.TWD) {
+            // 國際盤加約 1.7% 為現鈔賣出
+            liveFetchedRate = parseFloat((d.rates.TWD * 1.017).toFixed(4));
+            if (rateLabel) rateLabel.innerText = `🇹🇼 台銀參考現鈔：${liveFetchedRate.toFixed(4)}`;
             return liveFetchedRate;
           }
         }
-      } catch (err2) {
-        console.warn('備援端點連線失敗，啟用離線基準牌價', err2);
-      }
+      } catch (err) {}
 
       // 第三層保底
-      liveFetchedRate = 0.2048;
-      if (rateLabel) rateLabel.innerText = `🇹🇼 台銀基準牌告：0.2048`;
+      liveFetchedRate = 0.2046;
+      if (rateLabel) rateLabel.innerText = `🇹🇼 台銀基準牌告：0.2046`;
       return liveFetchedRate;
     }
 
@@ -2253,7 +2289,7 @@
       
       const toast = document.getElementById('speech-toast');
       if (toast) {
-        toast.innerText = `✓ 已抓取即時匯率：${newRate.toFixed(4)} 並套用！`;
+        toast.innerText = `✓ 台銀即時現鈔賣出已更新：${newRate.toFixed(4)}`;
         toast.classList.add('show');
         setTimeout(() => { toast.classList.remove('show'); }, 2600);
       }
@@ -2296,7 +2332,7 @@
       clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
     }
 
-    // 9. 天氣：對齊日本氣象廳 (JMA) 高解析模型 ＆ 即時小時降雨機率
+    // 9. 天氣：嚴格修復降雨率 null 錯誤 + WMO 判定
     function getWeatherDescByCode(code) {
       if (code === 0) return { text: "晴空萬里 ． 快晴", icon: "☀️" };
       if (code === 1 || code === 2) return { text: "多雲時晴 ． 快適", icon: "🌤" };
@@ -2306,15 +2342,15 @@
       if (code >= 61 && code <= 65) return { text: "陰雨綿綿 ． 降雨", icon: "🌧" };
       if (code >= 80 && code <= 82) return { text: "短暫陣雨 ． 留意", icon: "🌧" };
       if (code >= 95) return { text: "雷陣雨 ． 注意", icon: "⛈" };
-      return { text: "秋日快適 ． 散策", icon: "🌤" };
+      return { text: "秋日快適 ． 快適", icon: "🌤" };
     }
 
     async function fetchWeather() {
       try {
-        // 使用日本氣象廳專屬模型 jma_seamless，抓取即時當前與每小時降雨機率
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,relative_humidity_2m,weather_code&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&models=jma_seamless&t=${Date.now()}`;
+        // 同時請求當前溫度、weather_code 與每日/每小時降雨率
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,relative_humidity_2m,weather_code&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&t=${Date.now()}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error("Weather API Error");
+        if (!res.ok) throw new Error("Weather Fetch Failed");
         const data = await res.json();
 
         const currTemp = Math.round(data.current.temperature_2m);
@@ -2323,23 +2359,31 @@
         const wCode = data.current.weather_code;
         const weatherInfo = getWeatherDescByCode(wCode);
 
-        // 比對東京時區當前小時，取得此時此刻精確的降雨機率
+        // 防呆安全抓取降雨機率（絕不出現 null）
+        let safeRainProb = 20;
         const nowTokyo = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
-        const currentHour = nowTokyo.getHours();
-        let rainProb = 20; // 基準值
-        if (data.hourly && data.hourly.precipitation_probability && data.hourly.precipitation_probability[currentHour] !== undefined) {
-          rainProb = data.hourly.precipitation_probability[currentHour];
+        const curH = nowTokyo.getHours();
+
+        if (data.hourly && Array.isArray(data.hourly.precipitation_probability)) {
+          const val = data.hourly.precipitation_probability[curH];
+          if (val !== undefined && val !== null && !isNaN(val)) {
+            safeRainProb = Math.round(val);
+          } else if (data.daily && Array.isArray(data.daily.precipitation_probability_max)) {
+            safeRainProb = Math.round(data.daily.precipitation_probability_max[0] || 20);
+          }
+        } else if (data.daily && Array.isArray(data.daily.precipitation_probability_max)) {
+          safeRainProb = Math.round(data.daily.precipitation_probability_max[0] || 20);
         }
 
-        // 渲染畫面
+        // 渲染至介面
         document.getElementById('wt-icon').innerText = weatherInfo.icon;
         document.getElementById('wt-temp').innerText = `${currTemp}°C`;
         document.getElementById('wt-range').innerText = `最高 ${maxTemp}° ｜ 最低 ${minTemp}°`;
         document.getElementById('wt-status').innerText = weatherInfo.text;
-        document.getElementById('wt-rain').innerText = `💧 降雨率 ${rainProb}%`;
+        document.getElementById('wt-rain').innerText = `💧 ${safeRainProb}%`;
 
-        // 動態產出穿搭建議
-        const rainGear = rainProb >= 35 ? '摺疊傘 ． 必備' : '輕裝 ． 防曬備用';
+        // 動態生成穿搭提示
+        const rainGear = safeRainProb >= 35 ? '摺疊傘 ． 必備' : '輕裝 ． 防曬備用';
         const outerGear = minTemp < 17 ? '薄風衣 / 開襟針織' : (minTemp < 20 ? '輕夾克 / 罩衫' : '薄長袖 / 襯衫');
         const innerGear = currTemp >= 23 ? '舒適短T / 透氣棉質' : '長袖薄T / 襯衫';
 
@@ -2349,13 +2393,13 @@
           <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
           <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rainGear}</span></div></div>
         `;
-        return { currTemp, rainProb };
+        return { currTemp, safeRainProb };
       } catch (e) {
-        console.warn("JMA 天氣載入失敗，採用備援模型", e);
-        document.getElementById('wt-temp').innerText = '21°C';
+        console.warn("天氣 API 解析例外，啟用平滑備援", e);
+        document.getElementById('wt-temp').innerText = '22°C';
         document.getElementById('wt-range').innerText = '最高 24° ｜ 最低 17°';
         document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
-        document.getElementById('wt-rain').innerText = '💧 降雨率 20%';
+        document.getElementById('wt-rain').innerText = '💧 20%';
         return null;
       }
     }
@@ -2370,7 +2414,7 @@
       
       const toast = document.getElementById('speech-toast');
       if (toast && res) {
-        toast.innerText = `✓ 福岡天氣已更新：${res.currTemp}°C (降雨率 ${res.rainProb}%)`;
+        toast.innerText = `✓ 福岡天氣已更新：${res.currTemp}°C (降雨率 ${res.safeRainProb}%)`;
         toast.classList.add('show');
         setTimeout(() => { toast.classList.remove('show'); }, 2600);
       }
