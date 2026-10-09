@@ -565,25 +565,41 @@
     }
     .rate-status-top {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 3px;
       padding-bottom: 8px;
       border-bottom: 1px dashed var(--border-soft);
+    }
+    .rate-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
     }
     .rate-direction-tag {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font-size: 0.74rem;
+      font-size: 0.78rem;
       font-weight: 700;
       color: var(--slate-blue);
       letter-spacing: 0.02em;
+      white-space: nowrap;
     }
     .rate-status-val {
-      font-size: 0.86rem;
+      font-size: 0.92rem;
       font-weight: 700;
       color: var(--autumn-terracotta);
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .rate-sub-source {
+      display: flex;
+      align-items: center;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
     .rate-status-bottom {
       display: flex;
@@ -1205,9 +1221,15 @@
   <main id="kakeibo-view" class="tab-view">
     
     <div class="rate-status-card">
+      <!-- 方案 B：上下分層結構，主標行左右齊平，副標行顯示時間來源 -->
       <div class="rate-status-top">
-        <span class="rate-direction-tag">💱 匯率換算 (JPY ➔ TWD)</span>
-        <span class="rate-status-val" id="live-api-rate">🌐 即時現鈔牌價：讀取中...</span>
+        <div class="rate-header-row">
+          <span class="rate-direction-tag">💱 匯率換算 (JPY ➔ TWD)</span>
+          <span class="rate-status-val" id="live-api-rate-val">--</span>
+        </div>
+        <div class="rate-sub-source" id="live-api-rate-source">
+          🌐 即時現鈔牌價：讀取中...
+        </div>
       </div>
       <div class="rate-status-bottom">
         <div class="rate-calc-label-box">
@@ -2320,35 +2342,39 @@
       box.innerHTML = html;
     }
 
-    // 8. 匯率：改用原生 CORS JSON API + 1.5% 現鈔賣出點差補償
+    // 8. 匯率：改用原生 CORS JSON API + 1.5% 現鈔賣出點差補償（24 小時制）
     async function fetchLiveExchangeRate() {
-      const rateLabel = document.getElementById('live-api-rate');
+      const valEl = document.getElementById('live-api-rate-val');
+      const sourceEl = document.getElementById('live-api-rate-source');
       
       try {
-        // 原生支援瀏覽器 CORS 的即時開源外匯端點（免 Key、免二手 Proxy，毫秒級回應）
         const res = await fetch(`https://open.er-api.com/v6/latest/JPY?t=${Date.now()}`);
         if (!res.ok) throw new Error("Exchange API error: " + res.status);
         const data = await res.json();
         
         if (data && data.rates && data.rates.TWD) {
-          const rawSpotRate = data.rates.TWD; // 國際即期中間價 (例: ~0.2016)
-          // 加上台灣各銀行實體現鈔賣出標準點差 (約 +1.5%)
+          const rawSpotRate = data.rates.TWD; // 國際即期中間價
           const cashSellRate = parseFloat((rawSpotRate * 1.015).toFixed(4));
           
           liveFetchedRate = cashSellRate;
-          const nowStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
-          if (rateLabel) {
-            rateLabel.innerText = `🌐 即時現鈔牌價：${liveFetchedRate.toFixed(4)} (${nowStr})`;
-          }
+
+          // 24 小時制格式化 (例: 14:37)
+          const now = new Date();
+          const hr24 = String(now.getHours()).padStart(2, '0');
+          const min24 = String(now.getMinutes()).padStart(2, '0');
+          const time24Str = `${hr24}:${min24}`;
+
+          if (valEl) valEl.innerText = liveFetchedRate.toFixed(4);
+          if (sourceEl) sourceEl.innerText = `🌐 即時現鈔賣出牌價 (${time24Str} 更新)`;
           return liveFetchedRate;
         }
       } catch (err) {
         console.warn("即時匯率 API 連線異常，啟用備援牌價:", err);
       }
 
-      // 備援牌價
       liveFetchedRate = 0.2045;
-      if (rateLabel) rateLabel.innerText = `🌐 基準現鈔牌價：0.2045`;
+      if (valEl) valEl.innerText = "0.2045";
+      if (sourceEl) sourceEl.innerText = `🌐 基準現鈔牌價 (離線預設)`;
       return liveFetchedRate;
     }
 
@@ -2375,6 +2401,8 @@
     function applyRateDisplay() {
       document.getElementById('user-custom-rate').value = rate.toFixed(4);
       document.getElementById('calc-disp-rate').innerText = rate.toFixed(4);
+      const valEl = document.getElementById('live-api-rate-val');
+      if (valEl) valEl.innerText = rate.toFixed(4);
       runTaxCalc();
       drawRecords();
     }
