@@ -1207,7 +1207,7 @@
     <div class="rate-status-card">
       <div class="rate-status-top">
         <span class="rate-direction-tag">💱 匯率換算 (JPY ➔ TWD)</span>
-        <span class="rate-status-val" id="live-api-rate">🇹🇼 台銀現鈔賣出：讀取中...</span>
+        <span class="rate-status-val" id="live-api-rate">🌐 即時現鈔牌價：讀取中...</span>
       </div>
       <div class="rate-status-bottom">
         <div class="rate-calc-label-box">
@@ -1478,7 +1478,7 @@
     💡 若手機為靜音模式，請戴上耳機聆聽，或稍調大側邊音量 / 切換響鈴
   </div>
 
-  <!-- 【新增功能3】編輯記帳 Modal（與原版視覺風格一致） -->
+  <!-- 編輯記帳 Modal -->
   <div class="base-modal" id="editExpenseModal">
     <div class="modal-content">
       <div class="modal-title" style="font-weight:700; margin-bottom:10px; color:var(--slate-blue);">✏️ 編輯記帳記錄</div>
@@ -2196,7 +2196,7 @@
       drawRecords();
     }
 
-    // 【修改項目3】記帳編輯：打開彈窗帶入原始資料
+    // 記帳編輯：打開彈窗帶入原始資料
     function editRecord(id) {
       const rec = records.find(r => r.id === id);
       if (!rec) return;
@@ -2218,7 +2218,7 @@
       document.getElementById('editExpenseModal').classList.remove('active');
     }
 
-    // 【修改項目3】記帳編輯：覆寫更新已存在之項目，不改變其原有唯一識別與其他筆紀錄
+    // 記帳編輯：覆寫更新已存在之項目，不改變其原有唯一識別與其他筆紀錄
     function saveEditedRecord() {
       const id = parseInt(document.getElementById('edit-exp-id').value, 10);
       const idx = records.findIndex(r => r.id === id);
@@ -2309,7 +2309,6 @@
                     <div class="rec-twd">NT$ ${it.twd.toLocaleString()}</div>
                     <div class="rec-jpy">¥ ${it.jpy.toLocaleString()}</div>
                   </div>
-                  <!-- 【修改項目3】在刪除按鈕前加入編輯按鈕 -->
                   <button class="btn-sm" style="color:var(--slate-blue); border:none; background:none; padding:0 3px;" onclick="editRecord(${it.id})" title="編輯">✏️</button>
                   <button class="btn-sm" style="color:#A19B91; border:none; background:none; padding:0 3px;" onclick="removeRecord(${it.id})" title="刪除">✕</button>
                 </div>
@@ -2321,61 +2320,35 @@
       box.innerHTML = html;
     }
 
-    // 【修改項目2】匯率：鎖定台銀官方「現金賣出」最新牌價
+    // 8. 匯率：改用原生 CORS JSON API + 1.5% 現鈔賣出點差補償
     async function fetchLiveExchangeRate() {
       const rateLabel = document.getElementById('live-api-rate');
-      const uniqueSeed = Date.now() + "_" + Math.floor(Math.random() * 1000);
-      const botUrl = `https://rate.bot.com.tw/xrt/flcsv/0/day?nocache=${uniqueSeed}`;
       
-      const proxyList = [
-        `https://corsproxy.io/?${encodeURIComponent(botUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(botUrl)}&_rnd=${uniqueSeed}`
-      ];
-
-      for (let pUrl of proxyList) {
-        try {
-          const res = await fetch(pUrl, { cache: "no-store" });
-          if (res.ok) {
-            const text = await res.text();
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            
-            if (lines.length > 1) {
-              for (let line of lines) {
-                if (line.startsWith('JPY') || line.includes('日圓')) {
-                  const cols = line.split(',').map(c => c.trim().replace(/"/g, ''));
-                  // 台銀 CSV: 幣別(0),掛牌日(1),中文(2),現金買入(3),即期買入(4),遠期買入...現金賣出在第13欄(index 12或13)
-                  let cashSell = parseFloat(cols[12]);
-                  if (isNaN(cashSell) || cashSell < 0.19 || cashSell > 0.23) {
-                    cashSell = parseFloat(cols[13]);
-                  }
-                  
-                  // 防呆備援：若欄位位移，於合理的日幣現金賣出區間內鎖定
-                  if (isNaN(cashSell) || cashSell < 0.19 || cashSell > 0.23) {
-                    for (let c = 1; c < cols.length; c++) {
-                      let temp = parseFloat(cols[c]);
-                      if (!isNaN(temp) && temp >= 0.19 && temp <= 0.23) {
-                        if (!cashSell || temp > cashSell) cashSell = temp;
-                      }
-                    }
-                  }
-
-                  if (!isNaN(cashSell) && cashSell > 0) {
-                    liveFetchedRate = cashSell;
-                    if (rateLabel) rateLabel.innerText = `🇹🇼 台銀現鈔賣出：${liveFetchedRate.toFixed(4)}`;
-                    return liveFetchedRate;
-                  }
-                }
-              }
-            }
+      try {
+        // 原生支援瀏覽器 CORS 的即時開源外匯端點（免 Key、免二手 Proxy，毫秒級回應）
+        const res = await fetch(`https://open.er-api.com/v6/latest/JPY?t=${Date.now()}`);
+        if (!res.ok) throw new Error("Exchange API error: " + res.status);
+        const data = await res.json();
+        
+        if (data && data.rates && data.rates.TWD) {
+          const rawSpotRate = data.rates.TWD; // 國際即期中間價 (例: ~0.2016)
+          // 加上台灣各銀行實體現鈔賣出標準點差 (約 +1.5%)
+          const cashSellRate = parseFloat((rawSpotRate * 1.015).toFixed(4));
+          
+          liveFetchedRate = cashSellRate;
+          const nowStr = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+          if (rateLabel) {
+            rateLabel.innerText = `🌐 即時現鈔牌價：${liveFetchedRate.toFixed(4)} (${nowStr})`;
           }
-        } catch (e) {
-          console.warn("節點請求逾時，嘗試備援通道...", e);
+          return liveFetchedRate;
         }
+      } catch (err) {
+        console.warn("即時匯率 API 連線異常，啟用備援牌價:", err);
       }
 
-      // 備援：若伺服器皆不可達
+      // 備援牌價
       liveFetchedRate = 0.2045;
-      if (rateLabel) rateLabel.innerText = `🇹🇼 台銀基準牌告：0.2045`;
+      if (rateLabel) rateLabel.innerText = `🌐 基準現鈔牌價：0.2045`;
       return liveFetchedRate;
     }
 
@@ -2393,7 +2366,7 @@
       
       const toast = document.getElementById('speech-toast');
       if (toast) {
-        toast.innerText = `✓ 台銀即時現鈔賣出已更新：${newRate.toFixed(4)}`;
+        toast.innerText = `✓ 即時換匯現鈔牌價已更新：${newRate.toFixed(4)}`;
         toast.classList.add('show');
         setTimeout(() => { toast.classList.remove('show'); }, 2600);
       }
@@ -2436,7 +2409,7 @@
       clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
     }
 
-    // 【修改項目1】天氣：JMA 高解析無縫模型 + 15分鐘本地快取 + 精準小時降雨比對
+    // 9. 天氣：JMA 高解析無縫模型 + 15分鐘本地快取 + 精準小時降雨比對
     function getWeatherDescByCode(code) {
       if (code === 0) return { text: "晴空萬里 ． 快晴", icon: "☀" };
       if (code === 1 || code === 2) return { text: "多雲時晴 ． 快適", icon: "🌤" };
@@ -2455,7 +2428,6 @@
       const now = Date.now();
       const lastFetch = parseInt(localStorage.getItem(CACHE_TIME_KEY) || '0', 10);
 
-      // 15 分鐘快取機制（加速載入，降低無謂等待）
       if (!forceRefresh && (now - lastFetch < 15 * 60 * 1000)) {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
@@ -2468,7 +2440,6 @@
       }
 
       try {
-        // 精確錨定博多站座標 (33.5902, 130.4207)，精簡請求以加快解析速度
         const url = `https://api.open-meteo.com/v1/forecast?latitude=33.5902&longitude=130.4207&current=temperature_2m,weather_code&hourly=precipitation_probability&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&models=jma_seamless&forecast_days=1&t=${Date.now()}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Weather Fetch Failed");
@@ -2480,7 +2451,6 @@
         const wCode = data.current.weather_code;
         const weatherInfo = getWeatherDescByCode(wCode);
 
-        // 東京當前整點小時精確比對降雨機率
         let safeRainProb = 20;
         const nowTokyo = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
         const curH = nowTokyo.getHours();
