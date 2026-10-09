@@ -1478,67 +1478,6 @@
     💡 若手機為靜音模式，請戴上耳機聆聽，或稍調大側邊音量 / 切換響鈴
   </div>
 
-  <!-- 編輯記帳 Modal -->
-  <div class="base-modal" id="editExpenseModal">
-    <div class="modal-content">
-      <div class="modal-title" style="font-weight:700; margin-bottom:10px; color:var(--slate-blue);">✏️ 編輯記帳記錄</div>
-      <input type="hidden" id="edit-exp-id">
-      
-      <div class="f-row-grid-date">
-        <div class="f-group">
-          <label>消費日期</label>
-          <input type="date" id="edit-exp-date">
-        </div>
-        <div class="f-group">
-          <label>幣別</label>
-          <select id="edit-exp-curr">
-            <option value="JPY">日圓 (¥)</option>
-            <option value="TWD">台幣 ($)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="f-row">
-        <div class="f-group">
-          <label>支出名目</label>
-          <input type="text" id="edit-exp-item">
-        </div>
-      </div>
-
-      <div class="f-row">
-        <div class="f-group">
-          <label>金額</label>
-          <input type="number" id="edit-exp-amount" inputmode="decimal">
-        </div>
-      </div>
-
-      <div class="f-row">
-        <div class="f-group">
-          <label>分類</label>
-          <select id="edit-exp-type">
-            <option value="餐飲飲食">餐飲飲食</option>
-            <option value="交通移動">交通移動</option>
-            <option value="生活雜貨">生活雜貨</option>
-            <option value="景點體驗">景點體驗</option>
-            <option value="住宿費用">住宿費用</option>
-            <option value="其他花費">其他花費</option>
-          </select>
-        </div>
-        <div class="f-group">
-          <label>付款方式</label>
-          <select id="edit-exp-payment">
-            <option value="現金">現金</option>
-            <option value="信用卡">信用卡</option>
-            <option value="交通IC卡">交通IC卡</option>
-          </select>
-        </div>
-      </div>
-
-      <button class="btn-add" style="margin-bottom:6px;" onclick="saveEditedRecord()">儲存修改 ． SAVE</button>
-      <button class="btn-close-modal" onclick="closeEditExpenseModal()">取消</button>
-    </div>
-  </div>
-
   <!-- 編輯憑證 Modal -->
   <div class="base-modal" id="walletModal">
     <div class="modal-content">
@@ -1639,9 +1578,9 @@
 
   <div id="pdf-render-area"></div>
 
-  <!-- 核心單一腳本區塊 -->
+  <!-- 核心單一腳本區塊：確保載入順序絕對安全 -->
   <script>
-    // 1. 預設行程資料
+    // 1. 預設資料庫宣告
     const defaultItinerary = {
       1: [
         { time: "08:00 – 11:20", title: "台北出發 ➔ 抵達福岡 (長榮 BR 106)", transit: "✈️ 桃園 TPE ➔ 福岡 FUK", mapQuery: "Fukuoka Airport International Terminal", note: "飛抵福岡國際線航廈，通關入境、提領大件行李。" },
@@ -1807,7 +1746,7 @@
       rtdb.ref("fukuoka_trip/records").on("value", (snapshot) => {
         const cloudRecs = snapshot.val();
         if (cloudRecs) {
-          records = Array.isArray(cloudRecs) ? cloudRecs : Object.values(cloudRecs);
+          records = cloudRecs;
           localStorage.setItem('fk_records', JSON.stringify(records));
           drawRecords();
         }
@@ -2196,69 +2135,6 @@
       drawRecords();
     }
 
-    // 記帳就地編輯
-    function editRecord(id) {
-      const rec = records.find(r => r.id === id);
-      if (!rec) return;
-
-      document.getElementById('edit-exp-id').value = rec.id;
-      document.getElementById('edit-exp-date').value = rec.rawDate || '';
-      document.getElementById('edit-exp-item').value = rec.name;
-      document.getElementById('edit-exp-type').value = rec.type;
-      document.getElementById('edit-exp-payment').value = rec.pay;
-
-      const isJpyBase = rec.jpy !== undefined && rec.jpy > 0;
-      document.getElementById('edit-exp-curr').value = isJpyBase ? 'JPY' : 'TWD';
-      document.getElementById('edit-exp-amount').value = isJpyBase ? rec.jpy : rec.twd;
-
-      document.getElementById('editExpenseModal').classList.add('active');
-    }
-
-    function closeEditExpenseModal() {
-      document.getElementById('editExpenseModal').classList.remove('active');
-    }
-
-    function saveEditedRecord() {
-      const id = parseInt(document.getElementById('edit-exp-id').value, 10);
-      const idx = records.findIndex(r => r.id === id);
-      if (idx === -1) return;
-
-      const dateVal = document.getElementById('edit-exp-date').value;
-      const name = document.getElementById('edit-exp-item').value.trim();
-      const amount = parseFloat(document.getElementById('edit-exp-amount').value);
-      const curr = document.getElementById('edit-exp-curr').value;
-      const type = document.getElementById('edit-exp-type').value;
-      const pay = document.getElementById('edit-exp-payment').value;
-
-      if (!name || isNaN(amount) || amount <= 0) return alert('請填寫完整名目與金額！');
-
-      let twd = curr === 'JPY' ? Math.round(amount * rate) : Math.round(amount);
-      let jpy = curr === 'JPY' ? Math.round(amount) : Math.round(amount / rate);
-      let displayDate = dateVal;
-      if (dateVal && dateVal.includes('-')) {
-        const parts = dateVal.split('-');
-        displayDate = `${parts[1]}/${parts[2]}`;
-      }
-
-      records[idx] = {
-        ...records[idx],
-        rawDate: dateVal || new Date().toISOString().split('T')[0],
-        displayDate, name, twd, jpy, type, pay
-      };
-
-      records.sort((a,b) => (b.rawDate || '').localeCompare(a.rawDate || ''));
-      syncRecordsToCloud();
-      closeEditExpenseModal();
-      drawRecords();
-
-      const toast = document.getElementById('speech-toast');
-      if (toast) {
-        toast.innerText = `✓ 帳目已成功更新`;
-        toast.classList.add('show');
-        setTimeout(() => { toast.classList.remove('show'); }, 2200);
-      }
-    }
-
     function removeRecord(id) {
       if (confirm('確定刪除此筆記帳？（雙方手機將同步刪除）')) {
         records = records.filter(r => r.id !== id);
@@ -2308,8 +2184,7 @@
                     <div class="rec-twd">NT$ ${it.twd.toLocaleString()}</div>
                     <div class="rec-jpy">¥ ${it.jpy.toLocaleString()}</div>
                   </div>
-                  <button class="btn-sm" style="color:var(--slate-blue); border:none; background:none; padding:0 3px;" onclick="editRecord(${it.id})" title="編輯">✏️</button>
-                  <button class="btn-sm" style="color:#A19B91; border:none; background:none; padding:0 3px;" onclick="removeRecord(${it.id})" title="刪除">✕</button>
+                  <button class="btn-sm" style="color:#A19B91; border:none; background:none;" onclick="removeRecord(${it.id})">✕</button>
                 </div>
               </div>
             `).join('')}
@@ -2319,7 +2194,7 @@
       box.innerHTML = html;
     }
 
-    // 8. 匯率：鎖定台銀官方「現金賣出」最新牌價
+    // 8. 匯率：直連台銀官方「現金賣出」最新牌價
     async function fetchLiveExchangeRate() {
       const rateLabel = document.getElementById('live-api-rate');
       const uniqueSeed = Date.now() + "_" + Math.floor(Math.random() * 1000);
@@ -2340,14 +2215,11 @@
             if (lines.length > 1) {
               for (let line of lines) {
                 if (line.startsWith('JPY') || line.includes('日圓')) {
-                  const cols = line.split(',').map(c => c.trim().replace(/"/g, ''));
-                  // 台銀 CSV 第 13 欄 (index 12 或 13) 精確比對本行現金賣出價
+                  const cols = line.split(',');
+                  // 台銀 CSV 第 13 欄 (index 12) 為本行現金賣出價
                   let cashSell = parseFloat(cols[12]);
-                  if (isNaN(cashSell) || cashSell < 0.19 || cashSell > 0.23) {
-                    cashSell = parseFloat(cols[13]);
-                  }
                   
-                  // 備援：若欄位位移，於合規範圍 (0.19 ~ 0.23) 取最高值 (通常現鈔賣出 > 即期賣出)
+                  // 若欄位發生位移，自動比對該列合規的現鈔賣出數字
                   if (isNaN(cashSell) || cashSell < 0.19 || cashSell > 0.23) {
                     for (let c = 1; c < cols.length; c++) {
                       let temp = parseFloat(cols[c]);
@@ -2371,7 +2243,7 @@
         }
       }
 
-      // 備援：若連線異常
+      // 備援：若台銀官方斷線或休市
       liveFetchedRate = 0.2045;
       if (rateLabel) rateLabel.innerText = `🇹🇼 台銀基準牌告：0.2045`;
       return liveFetchedRate;
@@ -2434,9 +2306,9 @@
       clockEl.innerText = `${m}月${d}日 (${wd}) ${hr}:${min}`;
     }
 
-    // 9. 天氣：JMA 高解析無縫模型 + 快取 + 防折行
+    // 9. 天氣：對齊日本氣象廳模型與防呆降雨率解析
     function getWeatherDescByCode(code) {
-      if (code === 0) return { text: "晴空萬里 ． 快晴", icon: "☀" };
+      if (code === 0) return { text: "晴空萬里 ． 快晴", icon: "☀️️" };
       if (code === 1 || code === 2) return { text: "多雲時晴 ． 快適", icon: "🌤" };
       if (code === 3) return { text: "陰天微涼 ． 陰天", icon: "☁️" };
       if (code === 45 || code === 48) return { text: "晨間霧氣 ． 霧天", icon: "🌫" };
@@ -2447,27 +2319,9 @@
       return { text: "秋日快適 ． 快適", icon: "🌤" };
     }
 
-    async function fetchWeather(forceRefresh = false) {
-      const CACHE_KEY = 'fk_weather_cache';
-      const CACHE_TIME_KEY = 'fk_weather_time';
-      const now = Date.now();
-      const lastFetch = parseInt(localStorage.getItem(CACHE_TIME_KEY) || '0', 10);
-
-      // 15 分鐘快取判定
-      if (!forceRefresh && (now - lastFetch < 15 * 60 * 1000)) {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            renderWeatherUI(parsed);
-            return parsed;
-          } catch(e) {}
-        }
-      }
-
+    async function fetchWeather() {
       try {
-        // 鎖定博多站精準座標 (33.5902, 130.4207)，精簡 payload
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=33.5902&longitude=130.4207&current=temperature_2m,weather_code&hourly=precipitation_probability&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo&models=jma_seamless&forecast_days=1&t=${Date.now()}`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017&current=temperature_2m,relative_humidity_2m,weather_code&hourly=precipitation_probability,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo&models=jma_seamless&t=${Date.now()}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error("Weather Fetch Failed");
         const data = await res.json();
@@ -2478,7 +2332,7 @@
         const wCode = data.current.weather_code;
         const weatherInfo = getWeatherDescByCode(wCode);
 
-        // 東京小時降雨率比對
+        // 嚴格讀取當前降雨率
         let safeRainProb = 20;
         const nowTokyo = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
         const curH = nowTokyo.getHours();
@@ -2487,58 +2341,45 @@
           const val = data.hourly.precipitation_probability[curH];
           if (val !== undefined && val !== null && !isNaN(val)) {
             safeRainProb = Math.round(val);
-          } else {
-            const valid = data.hourly.precipitation_probability.filter(v => v !== null && !isNaN(v));
-            safeRainProb = valid.length ? Math.round(valid[0]) : 20;
+          } else if (data.daily && Array.isArray(data.daily.precipitation_probability_max)) {
+            safeRainProb = Math.round(data.daily.precipitation_probability_max[0] || 20);
           }
+        } else if (data.daily && Array.isArray(data.daily.precipitation_probability_max)) {
+          safeRainProb = Math.round(data.daily.precipitation_probability_max[0] || 20);
         }
 
-        const weatherPayload = {
-          currTemp, maxTemp, minTemp,
-          icon: weatherInfo.icon,
-          text: weatherInfo.text,
-          safeRainProb
-        };
+        document.getElementById('wt-icon').innerText = weatherInfo.icon;
+        document.getElementById('wt-temp').innerText = `${currTemp}°C`;
+        document.getElementById('wt-range').innerText = `最高 ${maxTemp}° ｜ 最低 ${minTemp}°`;
+        document.getElementById('wt-status').innerText = weatherInfo.text;
+        document.getElementById('wt-rain').innerText = `💧 ${safeRainProb}%`;
 
-        localStorage.setItem(CACHE_KEY, JSON.stringify(weatherPayload));
-        localStorage.setItem(CACHE_TIME_KEY, now.toString());
-        renderWeatherUI(weatherPayload);
-        return weatherPayload;
+        const rainGear = safeRainProb >= 35 ? '摺疊傘 ． 必備' : '輕裝 ． 防曬備用';
+        const outerGear = minTemp < 17 ? '薄風衣 / 開襟針織' : (minTemp < 20 ? '輕夾克 / 罩衫' : '薄長袖 / 襯衫');
+        const innerGear = currTemp >= 23 ? '舒適短T / 透氣棉質' : '長袖薄T / 襯衫';
+
+        document.getElementById('outfit-badges').innerHTML = `
+          <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${outerGear}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">${innerGear}</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
+          <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rainGear}</span></div></div>
+        `;
+        return { currTemp, safeRainProb };
       } catch (e) {
         console.warn("JMA 氣象讀取異常，啟動備援", e);
-        const fallback = {
-          currTemp: 22, maxTemp: 24, minTemp: 17,
-          icon: "🌤", text: "秋高氣爽 ． 快適", safeRainProb: 20
-        };
-        renderWeatherUI(fallback);
+        document.getElementById('wt-temp').innerText = '22°C';
+        document.getElementById('wt-range').innerText = '最高 24° ｜ 最低 17°';
+        document.getElementById('wt-status').innerText = '秋高氣爽 ． 快適';
+        document.getElementById('wt-rain').innerText = '💧 20%';
         return null;
       }
-    }
-
-    function renderWeatherUI(data) {
-      document.getElementById('wt-icon').innerText = data.icon;
-      document.getElementById('wt-temp').innerText = `${data.currTemp}°C`;
-      document.getElementById('wt-range').innerText = `最高 ${data.maxTemp}° ｜ 最低 ${data.minTemp}°`;
-      document.getElementById('wt-status').innerText = data.text;
-      document.getElementById('wt-rain').innerText = `💧 ${data.safeRainProb}%`;
-
-      const rainGear = data.safeRainProb >= 35 ? '摺疊傘 ． 必備' : '輕裝 ． 防曬備用';
-      const outerGear = data.minTemp < 17 ? '薄風衣 / 開襟針織' : (data.minTemp < 20 ? '輕夾克 / 罩衫' : '薄長袖 / 襯衫');
-      const innerGear = data.currTemp >= 23 ? '舒適短T / 透氣棉質' : '長袖薄T / 襯衫';
-
-      document.getElementById('outfit-badges').innerHTML = `
-        <div class="outfit-badge"><span class="outfit-emoji">🧥</span><div class="outfit-text"><span class="outfit-cat">外著層 (早晚)</span><span class="outfit-val">${outerGear}</span></div></div>
-        <div class="outfit-badge"><span class="outfit-emoji">👕</span><div class="outfit-text"><span class="outfit-cat">內著層 (舒適)</span><span class="outfit-val">${innerGear}</span></div></div>
-        <div class="outfit-badge"><span class="outfit-emoji">👟</span><div class="outfit-text"><span class="outfit-cat">足部 (散策)</span><span class="outfit-val">輕量好走運動鞋</span></div></div>
-        <div class="outfit-badge"><span class="outfit-emoji">🌂</span><div class="outfit-text"><span class="outfit-cat">隨行配備</span><span class="outfit-val">${rainGear}</span></div></div>
-      `;
     }
 
     async function manualRefreshWeather() {
       const btn = document.getElementById('btn-refresh-weather');
       if (btn) btn.innerText = '更新中...';
       
-      const res = await fetchWeather(true);
+      const res = await fetchWeather();
       
       if (btn) btn.innerText = '⚡ 更新即時天氣';
       
@@ -2697,7 +2538,7 @@
       area.style.display = 'none';
     }
 
-    // 11. 啟動初始化
+    // 11. 立即啟動渲染
     async function initApp() {
       drawPlans();
       drawRecords();
